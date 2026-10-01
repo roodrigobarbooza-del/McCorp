@@ -1,0 +1,11 @@
+name: MinerCorp-Territory
+version: '${project.version}'
+main: com.isjbar.minercorp.territory.TerritoryPlugin
+api-version: '26.3'
+author: isjbar
+description: Reclamo de chunks y vetas de mineral, reutilizable por cualquier trabajo. Expone TerritoryAPI via ServicesManager.
+
+permissions:
+  minercorp.admin:
+    description: Permite romper bloques en cualquier territorio reclamado
+    default: op

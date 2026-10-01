@@ -1,0 +1,7 @@
+# ============================================
+#  MinerCorp-Territory - configuracion
+# ============================================
+
+veta:
+  # Cuantas unidades de reserva da cada bloque de mineral de carbon detectado al reclamar un chunk
+  unidades-por-bloque: 8

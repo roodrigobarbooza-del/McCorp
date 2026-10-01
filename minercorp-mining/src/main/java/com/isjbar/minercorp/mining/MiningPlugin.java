@@ -1,0 +1,94 @@
+package com.isjbar.minercorp.mining;
+
+import com.isjbar.minercorp.economy.api.EconomyAPI;
+import com.isjbar.minercorp.mining.commands.EmpresaCommand;
+import com.isjbar.minercorp.mining.commands.SaldoCommand;
+import com.isjbar.minercorp.mining.company.CompanyManager;
+import com.isjbar.minercorp.mining.company.LevelConfig;
+import com.isjbar.minercorp.mining.gui.MenuListener;
+import com.isjbar.minercorp.mining.minion.MinionManager;
+import com.isjbar.minercorp.mining.vehicle.DrillVehicleListener;
+import com.isjbar.minercorp.mining.vehicle.DrillVehicleManager;
+import com.isjbar.minercorp.territory.api.TerritoryAPI;
+import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class MiningPlugin extends JavaPlugin {
+
+    private CompanyManager companyManager;
+    private LevelConfig levelConfig;
+    private MinionManager minionManager;
+    private DrillVehicleManager vehicleManager;
+    private TerritoryAPI territoryAPI;
+    private EconomyAPI economyAPI;
+
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+        getDataFolder().mkdirs();
+
+        this.territoryAPI = loadService(TerritoryAPI.class);
+        this.economyAPI = loadService(EconomyAPI.class);
+        if (territoryAPI == null || economyAPI == null) {
+            getLogger().severe("No se encontro MinerCorp-Territory y/o MinerCorp-Economy. Deshabilitando MinerCorp-Mining.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        this.levelConfig = new LevelConfig(getConfig());
+        this.companyManager = new CompanyManager(this, territoryAPI);
+        this.minionManager = new MinionManager(this, territoryAPI, economyAPI);
+        this.vehicleManager = new DrillVehicleManager(this, territoryAPI, economyAPI);
+
+        getServer().getPluginManager().registerEvents(new DrillVehicleListener(this, vehicleManager), this);
+        getServer().getPluginManager().registerEvents(new MenuListener(this), this);
+
+        EmpresaCommand empresaCommand = new EmpresaCommand(this);
+        getCommand("empresa").setExecutor(empresaCommand);
+        getCommand("empresa").setTabCompleter(empresaCommand);
+        SaldoCommand saldoCommand = new SaldoCommand(this);
+        getCommand("saldo").setExecutor(saldoCommand);
+        getCommand("saldo").setTabCompleter(saldoCommand);
+
+        minionManager.start();
+        vehicleManager.start();
+
+        getLogger().info("MinerCorp-Mining habilitado - " + companyManager.all().size() + " empresas cargadas.");
+    }
+
+    @Override
+    public void onDisable() {
+        if (minionManager != null) minionManager.stop();
+        if (vehicleManager != null) vehicleManager.stop();
+        if (companyManager != null) companyManager.save();
+    }
+
+    private <T> T loadService(Class<T> clazz) {
+        RegisteredServiceProvider<T> provider = getServer().getServicesManager().getRegistration(clazz);
+        return provider == null ? null : provider.getProvider();
+    }
+
+    public CompanyManager companies() {
+        return companyManager;
+    }
+
+    public TerritoryAPI territory() {
+        return territoryAPI;
+    }
+
+    public EconomyAPI economy() {
+        return economyAPI;
+    }
+
+    public LevelConfig levels() {
+        return levelConfig;
+    }
+
+    public MinionManager minions() {
+        return minionManager;
+    }
+
+    public DrillVehicleManager vehicles() {
+        return vehicleManager;
+    }
+}

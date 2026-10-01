@@ -1,0 +1,6 @@
+name: MinerCorp-Economy
+version: '${project.version}'
+main: com.isjbar.minercorp.economy.EconomyPlugin
+api-version: '26.3'
+author: isjbar
+description: Economia interna por cuentas (jugadores y empresas). Expone EconomyAPI via ServicesManager. Reemplazable por un puente a Vault.

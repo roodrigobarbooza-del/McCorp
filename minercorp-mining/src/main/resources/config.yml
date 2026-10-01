@@ -1,0 +1,66 @@
+# ============================================
+#  MinerCorp-Mining - configuracion
+# ============================================
+
+# El saldo inicial de jugador vive en MinerCorp-Economy, y la reserva de las
+# vetas vive en MinerCorp-Territory (ver el config.yml de cada uno).
+
+economia:
+  precio-carbon-crudo: 2.0
+  precio-carbon-refinado: 5.0
+  costo-fundar-empresa: 50.0
+  costo-reclamar-chunk: 100.0
+
+niveles:
+  xp-base-por-nivel: 1000
+  # Multiplicador de xp requerida por nivel (nivel 2 pide xp-base * multiplicador, etc)
+  multiplicador: 1.4
+  max-nivel: 10
+  # Chunks reclamables y minions permitidos por nivel (indice 0 = nivel 1)
+  chunks-por-nivel: [1, 2, 2, 3, 3, 4, 4, 5, 5, 6]
+  minions-por-nivel: [0, 1, 1, 2, 2, 3, 3, 4, 4, 5]
+  taladro-tier-maximo-por-nivel: [1, 1, 2, 2, 2, 3, 3, 3, 3, 3]
+
+# Tiers del taladro-vehiculo (un bote vanilla con setWorkOnLand(true), sin
+# dependencias externas, que el jugador conduce con los controles normales
+# de bote). Abre un tunel real: rompe cualquier bloque solido que tenga
+# delante dentro de tu propio territorio reclamado (el carbon que encuentra
+# en el camino se acredita a la empresa, el resto de los bloques solo
+# desaparecen, sin recompensa). bonus-rendimiento se suma a la extraccion de
+# carbon por ciclo; radio controla el tamano de la grilla de frente (1 =
+# solo el bloque de frente, 2 = una grilla de 3x3, 3 = 5x5, etc); velocidad
+# es el maxSpeed real del bote (0.4 es el valor vanilla por defecto).
+taladros:
+  intervalo-ticks: 10
+  # Unidades base extraidas por bloque detectado en cada ciclo, antes del bonus del tier
+  produccion-base: 8.0
+  tier-1:
+    nombre: "Taladro Basico"
+    costo: 150.0
+    bonus-rendimiento: 0.0
+    radio: 1
+    velocidad: 0.4
+  tier-2:
+    nombre: "Taladro Avanzado"
+    costo: 500.0
+    bonus-rendimiento: 0.25
+    radio: 2
+    velocidad: 0.5
+  tier-3:
+    nombre: "Taladro Industrial"
+    costo: 1500.0
+    bonus-rendimiento: 0.5
+    radio: 3
+    velocidad: 0.6
+
+minions:
+  costo-base: 300.0
+  costo-incremento-por-minion: 150.0
+  intervalo-ticks: 200
+  produccion-por-ciclo: 2
+
+refineria:
+  # Cuanto carbon crudo se necesita para 1 de refinado
+  ratio: 2
+  # Bonus de rendimiento al refinar por nivel de empresa (reduce el ratio efectivo)
+  bonus-por-nivel: 0.03

@@ -1,0 +1,6 @@
+# ============================================
+#  MinerCorp-Economy - configuracion
+# ============================================
+
+# Saldo con el que arranca un jugador la primera vez que se conecta
+saldo-inicial: 100.0

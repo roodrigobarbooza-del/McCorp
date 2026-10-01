@@ -1,0 +1,24 @@
+name: MinerCorp-Mining
+version: '${project.version}'
+main: com.isjbar.minercorp.mining.MiningPlugin
+api-version: '26.3'
+author: isjbar
+description: Nucleo del trabajo de mineria - empresas, taladros, minions, refineria y venta de carbon. Requiere MinerCorp-Territory y MinerCorp-Economy.
+depend: [MinerCorp-Territory, MinerCorp-Economy]
+
+commands:
+  empresa:
+    description: Comando principal de MinerCorp
+    usage: /empresa <subcomando>
+    aliases: [mc, empresamina]
+  saldo:
+    description: Consulta tu saldo personal
+    usage: /saldo
+
+permissions:
+  minercorp.use:
+    description: Permite usar los comandos basicos de MinerCorp
+    default: true
+  minercorp.admin:
+    description: Permite administrar MinerCorp (dar dinero, resetear empresas, etc)
+    default: op
