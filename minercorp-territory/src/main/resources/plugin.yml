@@ -7,5 +7,5 @@ description: Reclamo de chunks y vetas de mineral, reutilizable por cualquier tr
 
 permissions:
   minercorp.admin:
-    description: Permite romper bloques en cualquier territorio reclamado
+    description: Ignora la proteccion de territorio (romper, construir, abrir contenedores, etc)
     default: op

@@ -7,6 +7,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
@@ -42,7 +43,7 @@ public class DrillVehicleListener implements Listener {
     }
 
     /** Si el bote se destruye por cualquier via (fuego, lava, etc), limpiamos su carroceria para que no quede flotando. */
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDestroy(VehicleDestroyEvent event) {
         if (!(event.getVehicle() instanceof Boat boat)) return;
         if (boat.getPersistentDataContainer().has(vehicles.companyIdKey(), PersistentDataType.STRING)) {

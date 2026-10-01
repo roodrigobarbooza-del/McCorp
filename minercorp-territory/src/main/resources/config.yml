@@ -5,3 +5,10 @@
 veta:
   # Cuantas unidades de reserva da cada bloque de mineral de carbon detectado al reclamar un chunk
   unidades-por-bloque: 8
+
+proteccion:
+  # Si es true, ninguna explosion (TNT, creepers, camas, etc) rompe bloques,
+  # marcos, minions ni taladros dentro de un territorio reclamado
+  explosiones: true
+  # Si es true, el fuego no se propaga ni quema bloques dentro de un territorio reclamado
+  fuego: true
