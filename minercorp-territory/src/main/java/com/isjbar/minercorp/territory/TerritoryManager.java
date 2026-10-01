@@ -19,6 +19,7 @@ class TerritoryManager {
     private final TerritoryPlugin plugin;
     private final File file;
     private final Map<ChunkKey, Claim> claims = new LinkedHashMap<>();
+    private boolean dirty;
 
     TerritoryManager(TerritoryPlugin plugin) {
         this.plugin = plugin;
@@ -93,7 +94,8 @@ class TerritoryManager {
         Claim claim = claims.get(ChunkKey.of(chunk));
         if (claim == null) return 0;
         double extraido = claim.getVein().extraer(amount);
-        if (extraido > 0) save();
+        // Se guarda en lote (saveIfDirty), no por cada bloque extraido.
+        if (extraido > 0) dirty = true;
         return extraido;
     }
 
@@ -134,7 +136,12 @@ class TerritoryManager {
     // Persistencia
     // ---------------------------------------------------------------
 
+    void saveIfDirty() {
+        if (dirty) save();
+    }
+
     void save() {
+        dirty = false;
         YamlConfiguration yaml = new YamlConfiguration();
         ConfigurationSection root = yaml.createSection("claims");
 

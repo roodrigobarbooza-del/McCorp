@@ -51,46 +51,59 @@ ItemsAdder): todo corre con Paper/Spigot vanilla.
 
 ## El taladro-vehiculo
 
-La fisica/el asiento los maneja un **bote vanilla** (`org.bukkit.entity.Boat`,
-con `setWorkOnLand(true)` para andar en tierra y `setMaxSpeed(...)` por
-tier). No se uso ItemsAdder ni Oraxen: ambos son plugins de pago (su codigo
-puede estar visible en GitHub, pero la licencia de Oraxen dice explicitamente
-"debes comprar una licencia para usarlo", asi que tampoco es una alternativa
-gratuita real).
+Es un **vehiculo propio que mueve el servidor**, armado con entidades
+vanilla (sin resourcepack ni plugins de terceros):
 
-Para que no se vea "como un bote con otro nombre", el bote lleva acoplada una
-**carroceria propia** hecha combinando bloques vanilla existentes (sin
-resourcepack): un `BlockDisplay` ancho y bajo (bloque de hierro) que cubre el
-casco, y otro mas chico adelante (deepslate cincelado) simulando la punta del
-taladro. Ambos se reposicionan solos seteando su `Transformation` en
-`DrillVehicleManager`, siguen al bote cada `taladros.intervalo-ticks` y se
-borran solos si el bote se destruye (`VehicleDestroyEvent`) o con
-`/empresa taladro quitar`.
+- una raiz invisible (`BlockDisplay` sin bloque) donde va sentado el jugador
+  y que guarda empresa, tier y combustible en su PDC;
+- la carroceria `DrillModel` (chasis, orugas, motor, parabrisas, faros y una
+  punta conica que gira al perforar), con colores por tier configurables en
+  `taladros.tier-N.modelo`;
+- un `Interaction` invisible para poder hacerle click derecho.
 
-Limitaciones conocidas de este enfoque, a tener en cuenta:
-- Al no haber resourcepack, la carroceria esta limitada a texturas/bloques
-  que ya existen en el juego combinados de forma original - no es un modelo
-  3D propio. Si mas adelante quieren eso, el camino es generar un modelo en
-  Blockbench, cargarlo via custom model data y mostrarlo con el mismo
-  mecanismo de `BlockDisplay`/`ItemDisplay` (requiere alojar un resourcepack
-  para los jugadores), sin tocar la logica de minado.
-- El casco del bote puede asomar un poco por los bordes de la carroceria
-  (no hay forma de ocultarlo del todo sin un resourcepack); el ajuste fino
-  de tamanos/offsets de las cajas esta en `spawnHull`/`spawnBit` de
-  `DrillVehicleManager.java` por si hace falta afinarlo una vez probado en
-  un server real.
-- El reposicionamiento de la carroceria ocurre cada `taladros.intervalo-ticks`
-  (10 ticks = 0.5s por defecto), asi que puede verse levemente entrecortada
-  en vez de perfectamente fluida; bajar ese valor en `config.yml` la hace
-  mas suave a costa de un poco mas de carga en el servidor.
-- Mientras el bote tiene un pasajero, cada ciclo escanea una grilla delante
-  suyo y **abre un tunel real**: cualquier bloque solido y rompible que
-  encuentre ahi (siempre que este dentro de territorio reclamado por tu
-  propia empresa) desaparece, no solo el mineral. El carbon que encuentra en
-  el camino se acredita a la empresa; el resto de los bloques (tierra,
-  piedra, etc) simplemente se destruyen sin dar nada, como el paso de una
-  perforadora. No hace falta rieles ni nada especial, solo manejarlo como un
-  bote normal.
+Antes era un bote vanilla, pero un bote con jugador arriba lo mueve el
+cliente: `setMaxSpeed`/`setWorkOnLand` no tenian efecto real, en tierra
+andaba lentisimo y todos los tiers iban igual.
+
+### Como se usa
+
+1. `/empresa taladro comprar <tier>` parado dentro de tu territorio.
+2. Cargale combustible: click derecho al taladro con carbon, carbon vegetal o
+   bloque de carbon en la mano, o `/empresa taladro cargar [cantidad]` para
+   usar carbon crudo de la empresa.
+3. Click derecho con cualquier otra cosa para subirte.
+4. Controles: **W/S** avanzar y retroceder, **A/D** girar, **Espacio**
+   frenar, **Shift** bajarse. Arriba ves una barra con el combustible y el
+   carbon que sacaste en el viaje.
+
+### Como perfora
+
+- Mientras apretas W, perfora una caja de `ancho` x `alto` x `profundidad`
+  delante del vehiculo (por tier en `config.yml`). El piso donde esta apoyado
+  nunca se rompe, asi que el tunel sale derecho y no se hunde.
+- Cada bloque tarda segun su dureza (`ticks-por-dureza`, dividido por la
+  `potencia` del tier) y gasta `combustible.por-bloque`. Sin combustible se
+  puede manejar despacio pero no perfora.
+- No rompe: bloques irrompibles, los de `lista-negra`, nada con inventario
+  o datos (cofres, hornos, spawners, carteles...), nada fuera de tu
+  territorio, ni bloques pegados a agua o lava (`frenar-ante-liquidos`). En
+  esos casos frena y te avisa en la barra de accion.
+- No puede salir del territorio de tu empresa.
+- Recompensas por bloque en `taladros.recompensas`: el carbon sale de la
+  veta del chunk como antes (si la veta esta agotada, el bloque se rompe
+  igual sin recompensa); el resto da una XP chica de empresa por defecto.
+- Empresas y vetas se guardan cada `guardado-segundos`, no por bloque.
+
+### Notas
+
+- Los taladros-bote de la version anterior se convierten solos al vehiculo
+  nuevo (misma empresa y tier, tanque vacio) cuando se carga su chunk.
+- Si la raiz se borra con `/kill`, la carroceria y el asiento quedan sueltos:
+  `/empresa taladro quitar` cerca de ellos los limpia.
+- La altura del asiento se ajusta con `taladros.efectos.altura-asiento`.
+- Si ya tenias un `config.yml` generado, borrale la seccion `taladros:` (o
+  el archivo) para que se regenere con las opciones nuevas. Las claves que
+  falten usan los valores por defecto del plugin.
 
 ## Comandos (`/empresa`, alias `/mc`)
 
@@ -102,6 +115,7 @@ Limitaciones conocidas de este enfoque, a tener en cuenta:
 /empresa invitar|aceptar|rechazar|expulsar|salir
 /empresa disolver
 /empresa taladro comprar <tier>        (parado dentro de tu territorio)
+/empresa taladro cargar [cantidad]     (combustible con carbon crudo de la empresa)
 /empresa taladro quitar                (desarma el taladro mas cercano)
 /empresa minion <colocar|quitar|lista>
 /empresa refinar <cantidad>
