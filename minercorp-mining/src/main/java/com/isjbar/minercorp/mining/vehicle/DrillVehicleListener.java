@@ -96,7 +96,7 @@ public class DrillVehicleListener implements Listener {
         }
     }
 
-    /** El casco puede quedar a la altura de la cabeza en tuneles bajos: que no asfixie al conductor. */
+    /** En tuneles bajos la cabeza del conductor puede quedar dentro de un bloque: que no se asfixie. */
     @EventHandler(ignoreCancelled = true)
     public void onSuffocate(EntityDamageEvent event) {
         if (event.getCause() != EntityDamageEvent.DamageCause.SUFFOCATION) return;

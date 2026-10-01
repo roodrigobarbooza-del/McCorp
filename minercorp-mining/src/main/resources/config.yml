@@ -88,9 +88,6 @@ taladros:
     # Sonido de aviso cuando algo frena la perforacion (lista negra, liquido,
     # fin del territorio).
     sonido-bloqueado: "block.anvil.land"
-    # Si en tu server la punta del taladro se ve atras en vez de adelante,
-    # pone esto en true.
-    invertir-frente: false
     # Altura del asiento sobre el piso.
     altura-asiento: 0.6
 
@@ -98,6 +95,8 @@ taladros:
   # adelante perfora de una vez. velocidad: bloques por tick (0.2 = 4
   # bloques/s). giro: grados por tick con A/D. potencia: divide el tiempo de
   # perforacion. combustible: capacidad del tanque.
+  # Opcional: "modelo" con cuerpo/punta/detalle/oruga/vidrio (materiales de
+  # bloque) cambia los colores de la carroceria; si no esta, usa los del tier.
   tier-1:
     nombre: "Taladro Basico"
     costo: 150.0

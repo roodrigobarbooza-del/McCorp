@@ -54,10 +54,11 @@ ItemsAdder): todo corre con Paper/Spigot vanilla.
 Es un **vehiculo propio que mueve el servidor**, armado con entidades
 vanilla (sin resourcepack ni plugins de terceros):
 
-- un `BlockDisplay` de hierro como casco, que es la entidad raiz: el jugador
-  va sentado en el y guarda empresa, tier y combustible en su PDC;
-- un `ItemDisplay` de deepslate cincelado como punta, que gira mientras
-  perfora;
+- una raiz invisible (`BlockDisplay` sin bloque) donde va sentado el jugador
+  y que guarda empresa, tier y combustible en su PDC;
+- la carroceria `DrillModel` (chasis, orugas, motor, parabrisas, faros y una
+  punta conica que gira al perforar), con colores por tier configurables en
+  `taladros.tier-N.modelo`;
 - un `Interaction` invisible para poder hacerle click derecho.
 
 Antes era un bote vanilla, pero un bote con jugador arriba lo mueve el
@@ -78,7 +79,7 @@ andaba lentisimo y todos los tiers iban igual.
 ### Como perfora
 
 - Mientras apretas W, perfora una caja de `ancho` x `alto` x `profundidad`
-  delante del casco (por tier en `config.yml`). El piso donde esta apoyado
+  delante del vehiculo (por tier en `config.yml`). El piso donde esta apoyado
   nunca se rompe, asi que el tunel sale derecho y no se hunde.
 - Cada bloque tarda segun su dureza (`ticks-por-dureza`, dividido por la
   `potencia` del tier) y gasta `combustible.por-bloque`. Sin combustible se
@@ -97,11 +98,9 @@ andaba lentisimo y todos los tiers iban igual.
 
 - Los taladros-bote de la version anterior se convierten solos al vehiculo
   nuevo (misma empresa y tier, tanque vacio) cuando se carga su chunk.
-- Si el casco se borra con `/kill`, la punta y el asiento quedan sueltos:
+- Si la raiz se borra con `/kill`, la carroceria y el asiento quedan sueltos:
   `/empresa taladro quitar` cerca de ellos los limpia.
-- Si en tu version la punta se ve atras del casco, poner
-  `taladros.efectos.invertir-frente: true`. La altura del asiento se ajusta
-  con `taladros.efectos.altura-asiento`.
+- La altura del asiento se ajusta con `taladros.efectos.altura-asiento`.
 - Si ya tenias un `config.yml` generado, borrale la seccion `taladros:` (o
   el archivo) para que se regenere con las opciones nuevas. Las claves que
   falten usan los valores por defecto del plugin.

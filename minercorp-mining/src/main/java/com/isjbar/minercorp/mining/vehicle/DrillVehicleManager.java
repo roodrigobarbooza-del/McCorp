@@ -19,7 +19,6 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.TileState;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Waterlogged;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -27,17 +26,12 @@ import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Interaction;
-import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
-import org.joml.AxisAngle4f;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -54,12 +48,12 @@ import java.util.UUID;
 /**
  * Taladro-vehiculo. Ya no es un bote: el bote lo mueve el cliente del
  * jugador, asi que la velocidad por tier no tenia efecto y en tierra andaba
- * lentisimo. Ahora el vehiculo son tres entidades vanilla:
+ * lentisimo. Ahora el vehiculo son:
  *
  * <ul>
- *   <li>la raiz, un {@link BlockDisplay} (el casco) al que se sube el jugador
+ *   <li>la raiz, un {@link BlockDisplay} invisible al que se sube el jugador
  *       y que guarda empresa, tier y combustible en su PDC;</li>
- *   <li>la punta, un {@link ItemDisplay} que gira mientras perfora;</li>
+ *   <li>la carroceria, un {@link DrillModel} (solo dibuja);</li>
  *   <li>un {@link Interaction} invisible para poder hacerle click derecho
  *       (subirse o cargar combustible).</li>
  * </ul>
@@ -72,11 +66,9 @@ import java.util.UUID;
  */
 public class DrillVehicleManager {
 
-    private static final float HULL_WIDTH = 1.3f;
-    private static final float HULL_HEIGHT = 0.6f;
-    private static final float HULL_LENGTH = 1.6f;
     private static final double HALF_WIDTH = 0.45;
-    private static final double HALF_LENGTH = 0.5;
+    /** Medio largo del vehiculo: el frente de las orugas de DrillModel queda a ~1 bloque del centro. */
+    private static final double HALF_LENGTH = 0.9;
     private static final int TELEPORT_TICKS = 2;
 
     private final MiningPlugin plugin;
@@ -86,7 +78,7 @@ public class DrillVehicleManager {
     private final NamespacedKey companyKey;
     private final NamespacedKey tierKey;
     private final NamespacedKey fuelKey;
-    private final NamespacedKey bitKey;
+    private final NamespacedKey modelKey;
     private final NamespacedKey seatKey;
     private final NamespacedKey rootKey;
 
@@ -111,7 +103,7 @@ public class DrillVehicleManager {
         this.companyKey = new NamespacedKey(plugin, "taladro_empresa");
         this.tierKey = new NamespacedKey(plugin, "taladro_tier");
         this.fuelKey = new NamespacedKey(plugin, "taladro_combustible");
-        this.bitKey = new NamespacedKey(plugin, "taladro_punta");
+        this.modelKey = new NamespacedKey(plugin, "taladro_modelo");
         this.seatKey = new NamespacedKey(plugin, "taladro_asiento");
         this.rootKey = new NamespacedKey(plugin, "taladro_raiz");
         this.legacyCompanyKey = new NamespacedKey(plugin, "drill_company");
@@ -171,60 +163,46 @@ public class DrillVehicleManager {
         World world = feet.getWorld();
         Location rootLoc = feet.clone().add(0, settings.seatHeight, 0);
 
+        // Raiz invisible: lleva al conductor y los datos del taladro. Es un display
+        // (sin bloque) para que el cliente interpole su movimiento y el del pasajero.
         BlockDisplay root = world.spawn(rootLoc, BlockDisplay.class, d -> {
-            d.setBlock(Material.IRON_BLOCK.createBlockData());
-            d.setTransformation(new Transformation(
-                    new Vector3f(-HULL_WIDTH / 2f, (float) -settings.seatHeight, -HULL_LENGTH / 2f),
-                    new AxisAngle4f(0, 0, 0, 1),
-                    new Vector3f(HULL_WIDTH, HULL_HEIGHT, HULL_LENGTH),
-                    new AxisAngle4f(0, 0, 0, 1)));
+            d.setBlock(Material.AIR.createBlockData());
             d.setTeleportDuration(TELEPORT_TICKS);
-            d.customName(Component.text(tier.nombre() + " - " + companyName, NamedTextColor.AQUA));
-            d.setCustomNameVisible(true);
             PersistentDataContainer pdc = d.getPersistentDataContainer();
             pdc.set(companyKey, PersistentDataType.STRING, companyId.toString());
             pdc.set(tierKey, PersistentDataType.INTEGER, tier.tier());
             pdc.set(fuelKey, PersistentDataType.DOUBLE, fuel);
         });
 
-        ItemDisplay bit = world.spawn(rootLoc, ItemDisplay.class, d -> {
-            d.setItemStack(new ItemStack(Material.CHISELED_DEEPSLATE));
-            d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
-            d.setTransformation(bitTransformation(0));
-            d.setTeleportDuration(TELEPORT_TICKS);
-            d.setInterpolationDuration(2);
-            d.getPersistentDataContainer().set(rootKey, PersistentDataType.STRING, root.getUniqueId().toString());
-        });
+        DrillModel model = DrillModel.spawn(plugin, feet, tier.tier(),
+                Component.text(tier.nombre() + " - " + companyName, NamedTextColor.AQUA));
+        Entity chassis = plugin.getServer().getEntity(model.rootId());
+        if (chassis != null) {
+            chassis.getPersistentDataContainer().set(rootKey, PersistentDataType.STRING, root.getUniqueId().toString());
+        }
 
         Interaction seat = world.spawn(feet, Interaction.class, i -> {
-            i.setInteractionWidth(1.6f);
-            i.setInteractionHeight(1.1f);
+            i.setInteractionWidth(1.8f);
+            i.setInteractionHeight(1.3f);
             i.setResponsive(true);
             i.getPersistentDataContainer().set(rootKey, PersistentDataType.STRING, root.getUniqueId().toString());
         });
 
-        root.getPersistentDataContainer().set(bitKey, PersistentDataType.STRING, bit.getUniqueId().toString());
+        root.getPersistentDataContainer().set(modelKey, PersistentDataType.STRING, model.rootId().toString());
         root.getPersistentDataContainer().set(seatKey, PersistentDataType.STRING, seat.getUniqueId().toString());
         return root;
     }
 
-    /** Punta: un cubo girado 45 grados (rombo) delante del casco, que rota sobre el eje de avance. */
-    private Transformation bitTransformation(float spinDegrees) {
-        float forward = (HULL_LENGTH / 2f + 0.2f) * (settings.invertFront ? -1f : 1f);
-        Quaternionf rotation = new Quaternionf()
-                .rotateZ((float) Math.toRadians(spinDegrees + 45f));
-        return new Transformation(
-                new Vector3f(0f, (float) (-settings.seatHeight + HULL_HEIGHT / 2f), forward),
-                rotation,
-                new Vector3f(0.55f, 0.55f, 0.7f),
-                new Quaternionf());
+    private Optional<DrillModel> modelOf(Entity root) {
+        String id = root.getPersistentDataContainer().get(modelKey, PersistentDataType.STRING);
+        return id == null ? Optional.empty() : DrillModel.find(plugin, UUID.fromString(id));
     }
 
-    /** Elimina el taladro completo (casco, punta y asiento). */
+    /** Elimina el taladro completo (raiz, carroceria y asiento). */
     public void removeVehicle(BlockDisplay root) {
         stopDriving(root.getUniqueId());
         root.eject();
-        linked(root, bitKey).ifPresent(Entity::remove);
+        modelOf(root).ifPresent(DrillModel::remove);
         linked(root, seatKey).ifPresent(Entity::remove);
         root.remove();
     }
@@ -246,14 +224,16 @@ public class DrillVehicleManager {
         return Optional.ofNullable(nearest);
     }
 
-    /** Borra puntas/asientos cercanos cuyo casco ya no existe (por ejemplo, si se uso /kill). */
+    /** Borra modelos/asientos cercanos cuyo taladro ya no existe (por ejemplo, si se uso /kill). */
     public int removeOrphanParts(Location location, double radius) {
         int removed = 0;
         for (Entity e : location.getWorld().getNearbyEntities(location, radius, radius, radius)) {
             String rootId = e.getPersistentDataContainer().get(rootKey, PersistentDataType.STRING);
             if (rootId == null) continue;
             if (plugin.getServer().getEntity(UUID.fromString(rootId)) == null) {
-                e.remove();
+                Optional<DrillModel> model = DrillModel.find(plugin, e.getUniqueId());
+                if (model.isPresent()) model.get().remove();
+                else e.remove();
                 removed++;
             }
         }
@@ -314,7 +294,7 @@ public class DrillVehicleManager {
         return id == null ? Optional.empty() : Optional.of(UUID.fromString(id));
     }
 
-    /** Dado un asiento (Interaction) o el casco, devuelve el casco. */
+    /** Dado un asiento (Interaction) o la raiz, devuelve la raiz. */
     public Optional<BlockDisplay> rootOf(Entity entity) {
         if (entity instanceof BlockDisplay display && display.getPersistentDataContainer().has(companyKey, PersistentDataType.STRING)) {
             return Optional.of(display);
@@ -346,6 +326,7 @@ public class DrillVehicleManager {
         v.z = loc.getZ();
         v.yaw = loc.getYaw();
         v.fuel = fuelOf(root);
+        v.model = modelOf(root).orElse(null);
         driving.put(root.getUniqueId(), v);
 
         updateBossBar(v);
@@ -360,6 +341,7 @@ public class DrillVehicleManager {
         if (root != null) {
             root.getPersistentDataContainer().set(fuelKey, PersistentDataType.DOUBLE, v.fuel);
         }
+        if (v.model != null && v.model.isValid()) v.model.setDrilling(false);
         Player driver = plugin.getServer().getPlayer(v.driverId);
         if (driver != null) {
             driver.hideBossBar(v.bossBar);
@@ -444,17 +426,14 @@ public class DrillVehicleManager {
         // Mover entidades
         Location rootLoc = new Location(v.world, v.x, v.y + settings.seatHeight, v.z, v.yaw, 0);
         root.teleport(rootLoc, TeleportFlag.EntityState.RETAIN_PASSENGERS);
-        linked(root, bitKey).ifPresent(bit -> {
-            bit.teleport(rootLoc);
-            if (drilling && bit instanceof ItemDisplay display && v.ticks % 2 == 0) {
-                v.bitSpin = (v.bitSpin + 50f) % 360f;
-                display.setInterpolationDelay(0);
-                display.setTransformation(bitTransformation(v.bitSpin));
-            }
-        });
-        linked(root, seatKey).ifPresent(seat -> seat.teleport(new Location(v.world, v.x, v.y, v.z, v.yaw, 0)));
+        Location feet = new Location(v.world, v.x, v.y, v.z, v.yaw, 0);
+        if (v.model != null && v.model.isValid()) {
+            v.model.moveTo(feet);
+            v.model.setDrilling(drilling);
+        }
+        linked(root, seatKey).ifPresent(seat -> seat.teleport(feet));
 
-        effects(v, dir, drilling);
+        effects(v, drilling);
         if (v.ticks % 10 == 0) updateBossBar(v);
     }
 
@@ -503,7 +482,6 @@ public class DrillVehicleManager {
         for (Block block : targets) {
             if (v.fuel <= 0) break;
             Material type = block.getType();
-            BlockData data = block.getBlockData();
             DrillRewards.Reward reward = rewards.get(type);
             if (reward.veta()) {
                 double extracted = territory.extractFromVein(block.getChunk(), settings.baseProduction * bonus);
@@ -515,17 +493,10 @@ public class DrillVehicleManager {
             money += reward.dinero() * bonus;
             xp += reward.xp() * bonus;
 
+            if (v.model != null && v.model.isValid()) v.model.onBlockBroken(block);
             block.setType(Material.AIR);
             v.fuel = Math.max(0, v.fuel - settings.fuelPerBlock);
             v.tripBlocks++;
-
-            Location center = block.getLocation().add(0.5, 0.5, 0.5);
-            if (settings.particles) {
-                v.world.spawnParticle(Particle.BLOCK, center, 12, 0.3, 0.3, 0.3, 0, data);
-            }
-            if (settings.sounds) {
-                v.world.playSound(center, data.getSoundGroup().getBreakSound(), settings.volume * 0.6f, 0.8f);
-            }
         }
 
         if (coal > 0) {
@@ -561,7 +532,7 @@ public class DrillVehicleManager {
         return false;
     }
 
-    /** Caja de ancho x alto x profundidad delante del casco. El piso (y - 1) nunca se incluye. */
+    /** Caja de ancho x alto x profundidad delante del vehiculo. El piso (y - 1) nunca se incluye. */
     private Set<Block> frontBlocks(DrillVehicle v, Vector dir) {
         Vector perp = new Vector(-dir.getZ(), 0, dir.getX());
         Set<Block> blocks = new LinkedHashSet<>();
@@ -629,16 +600,13 @@ public class DrillVehicleManager {
         }
     }
 
-    private void effects(DrillVehicle v, Vector dir, boolean drilling) {
+    /** Sonido de motor al andar. Las chispas, el humo y el sonido de perforacion los pone DrillModel. */
+    private void effects(DrillVehicle v, boolean drilling) {
         boolean moving = Math.abs(v.speed) > 0.01;
-        if (settings.particles && (moving || drilling) && v.ticks % 3 == 0) {
-            Location back = new Location(v.world, v.x, v.y + HULL_HEIGHT + 0.2, v.z).subtract(dir.clone().multiply(HULL_LENGTH / 2));
-            v.world.spawnParticle(Particle.SMOKE, back, 2, 0.05, 0.05, 0.05, 0.01);
-        }
-        if (settings.sounds && settings.engineSound != null && (moving || drilling)
+        if (settings.sounds && settings.engineSound != null && moving && !drilling
                 && v.ticks % settings.engineInterval == 0) {
             v.world.playSound(net.kyori.adventure.sound.Sound.sound(settings.engineSound,
-                    net.kyori.adventure.sound.Sound.Source.NEUTRAL, settings.volume * 0.5f, drilling ? 0.7f : 1.0f),
+                    net.kyori.adventure.sound.Sound.Source.NEUTRAL, settings.volume * 0.5f, 1.0f),
                     v.x, v.y, v.z);
         }
     }
@@ -742,7 +710,7 @@ public class DrillVehicleManager {
                             double speedWithoutFuel, Set<Material> blacklist, Map<Material, Double> fuelItems,
                             double fuelPerRawCoal, double fuelPerBlock, boolean particles, boolean sounds,
                             float volume, Key engineSound, int engineInterval, Key blockedSound,
-                            boolean invertFront, double seatHeight) {
+                            double seatHeight) {
 
         static Settings load(MiningPlugin plugin) {
             FileConfiguration c = plugin.getConfig();
@@ -777,7 +745,6 @@ public class DrillVehicleManager {
                     parseKey(plugin, c.getString("taladros.efectos.sonido-motor", "entity.minecart.riding")),
                     Math.max(1, c.getInt("taladros.efectos.intervalo-motor", 20)),
                     parseKey(plugin, c.getString("taladros.efectos.sonido-bloqueado", "block.anvil.land")),
-                    c.getBoolean("taladros.efectos.invertir-frente", false),
                     c.getDouble("taladros.efectos.altura-asiento", 0.6)
             );
         }

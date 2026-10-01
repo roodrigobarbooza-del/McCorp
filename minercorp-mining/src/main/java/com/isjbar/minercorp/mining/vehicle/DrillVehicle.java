@@ -18,6 +18,8 @@ final class DrillVehicle {
     final UUID driverId;
     final World world;
     final BossBar bossBar;
+    /** Carroceria; null si se perdio (el taladro sigue andando, solo no se ve). */
+    DrillModel model;
 
     /** Posicion de los "pies" del taladro (el piso donde esta apoyado). */
     double x, y, z;
@@ -27,7 +29,6 @@ final class DrillVehicle {
     double fuel;
 
     int drillProgress;
-    float bitSpin;
     int ticks;
     int lastWarningTick = -1000;
     double tripCoal;
