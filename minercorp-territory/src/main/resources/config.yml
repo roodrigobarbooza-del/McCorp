@@ -5,3 +5,7 @@
 veta:
   # Cuantas unidades de reserva da cada bloque de mineral de carbon detectado al reclamar un chunk
   unidades-por-bloque: 8
+
+# Cada cuantos segundos se guardan las vetas si cambiaron (el taladro ya no
+# guarda a disco por cada bloque extraido).
+guardado-segundos: 30

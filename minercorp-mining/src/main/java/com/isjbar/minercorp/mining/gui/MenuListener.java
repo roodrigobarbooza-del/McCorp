@@ -213,7 +213,7 @@ public class MenuListener implements Listener {
         }
         DrillVehicleManager.PlacementResult result = plugin.vehicles().spawn(company, tier, player.getLocation());
         switch (result) {
-            case OK -> msg(player, NamedTextColor.GREEN, "Taladro comprado y colocado.");
+            case OK -> msg(player, NamedTextColor.GREEN, "Taladro comprado y colocado. Cargale carbon y subite con click derecho.");
             case TIER_INVALIDO -> msg(player, NamedTextColor.RED, "Ese tier no existe.");
             case FUERA_DE_TERRITORIO -> msg(player, NamedTextColor.RED, "Debes estar parado dentro de un territorio reclamado por tu empresa.");
             case SIN_SALDO -> msg(player, NamedTextColor.RED, "La empresa no tiene saldo suficiente para ese taladro.");

@@ -21,37 +21,116 @@ niveles:
   minions-por-nivel: [0, 1, 1, 2, 2, 3, 3, 4, 4, 5]
   taladro-tier-maximo-por-nivel: [1, 1, 2, 2, 2, 3, 3, 3, 3, 3]
 
-# Tiers del taladro-vehiculo (un bote vanilla con setWorkOnLand(true), sin
-# dependencias externas, que el jugador conduce con los controles normales
-# de bote). Abre un tunel real: rompe cualquier bloque solido que tenga
-# delante dentro de tu propio territorio reclamado (el carbon que encuentra
-# en el camino se acredita a la empresa, el resto de los bloques solo
-# desaparecen, sin recompensa). bonus-rendimiento se suma a la extraccion de
-# carbon por ciclo; radio controla el tamano de la grilla de frente (1 =
-# solo el bloque de frente, 2 = una grilla de 3x3, 3 = 5x5, etc); velocidad
-# es el maxSpeed real del bote (0.4 es el valor vanilla por defecto).
+# Taladro-vehiculo. Es un vehiculo propio (no un bote): el jugador se sube
+# con click derecho y el servidor lo mueve segun sus teclas:
+#   W / S  -> avanzar / retroceder      A / D -> girar
+#   Espacio -> frenar                   Shift -> bajarse
+# Al avanzar contra bloques los perfora y abre un tunel de ancho x alto
+# (el piso donde esta apoyado nunca se rompe). Solo funciona dentro del
+# territorio reclamado por tu empresa: no puede salir de el ni romper afuera.
 taladros:
-  intervalo-ticks: 10
-  # Unidades base extraidas por bloque detectado en cada ciclo, antes del bonus del tier
+  # Cada cuantos segundos se guardan empresas y vetas mientras se perfora
+  # (antes se guardaba a disco por cada bloque).
+  guardado-segundos: 30
+  # Unidades de carbon que se intentan extraer de la veta por cada bloque de
+  # carbon perforado, antes del bonus-rendimiento del tier.
   produccion-base: 8.0
+  # Ticks de perforacion por punto de dureza del bloque (piedra = 1.5,
+  # deepslate = 3, obsidiana = 50). Se divide por la "potencia" del tier.
+  ticks-por-dureza: 4.0
+  # Cada bloque de agua o lava pegado al frente frena el taladro en vez de
+  # abrirle paso (para no inundar el tunel).
+  frenar-ante-liquidos: true
+  # Si puede subir solo escalones de 1 bloque cuando el techo lo permite.
+  puede-subir-escalones: true
+  # Fraccion de la velocidad maxima con la que se puede manejar sin combustible
+  # (sin combustible no perfora).
+  velocidad-sin-combustible: 0.4
+  # Bloques que nunca rompe, ademas de los que tienen inventario o datos
+  # (cofres, hornos, spawners, carteles, etc) y los irrompibles (bedrock).
+  lista-negra: [OBSIDIAN, CRYING_OBSIDIAN, REINFORCED_DEEPSLATE, END_PORTAL_FRAME, BUDDING_AMETHYST]
+
+  combustible:
+    # Cuanto combustible da cada item al hacer click derecho al taladro con el
+    # en la mano, o cada unidad de carbon crudo con /empresa taladro cargar.
+    items:
+      COAL: 10
+      CHARCOAL: 10
+      COAL_BLOCK: 90
+    por-carbon-crudo: 5
+    # Combustible que gasta cada bloque perforado.
+    por-bloque: 1.0
+
+  recompensas:
+    # Que da cada bloque perforado. "veta: true" saca carbon de la veta del
+    # chunk (como antes: suma carbon crudo a la empresa y xp-por-unidad de XP).
+    # Si la veta esta agotada el bloque se rompe igual, sin recompensa.
+    # "dinero" va directo al balance de la empresa y "xp" a la XP de empresa;
+    # ambos se multiplican por (1 + bonus-rendimiento) del tier.
+    # "default" aplica a cualquier bloque que no figure en la lista.
+    default:
+      dinero: 0
+      xp: 0.05
+    COAL_ORE:
+      veta: true
+      xp-por-unidad: 0.5
+    DEEPSLATE_COAL_ORE:
+      veta: true
+      xp-por-unidad: 0.5
+
+  efectos:
+    particulas: true
+    sonidos: true
+    volumen: 0.8
+    # Sonido del motor mientras se mueve, y cada cuantos ticks se repite.
+    sonido-motor: "entity.minecart.riding"
+    intervalo-motor: 20
+    # Sonido de aviso cuando algo frena la perforacion (lista negra, liquido,
+    # fin del territorio).
+    sonido-bloqueado: "block.anvil.land"
+    # Si en tu server la punta del taladro se ve atras en vez de adelante,
+    # pone esto en true.
+    invertir-frente: false
+    # Altura del asiento sobre el piso.
+    altura-asiento: 0.6
+
+  # Tiers. ancho/alto: tamano del tunel. profundidad: cuantos bloques hacia
+  # adelante perfora de una vez. velocidad: bloques por tick (0.2 = 4
+  # bloques/s). giro: grados por tick con A/D. potencia: divide el tiempo de
+  # perforacion. combustible: capacidad del tanque.
   tier-1:
     nombre: "Taladro Basico"
     costo: 150.0
     bonus-rendimiento: 0.0
-    radio: 1
-    velocidad: 0.4
+    ancho: 2
+    alto: 2
+    profundidad: 1
+    velocidad: 0.15
+    giro: 4.0
+    potencia: 1.0
+    combustible: 100
   tier-2:
     nombre: "Taladro Avanzado"
     costo: 500.0
     bonus-rendimiento: 0.25
-    radio: 2
-    velocidad: 0.5
+    ancho: 3
+    alto: 3
+    profundidad: 1
+    velocidad: 0.22
+    giro: 5.0
+    potencia: 1.6
+    combustible: 250
   tier-3:
     nombre: "Taladro Industrial"
     costo: 1500.0
     bonus-rendimiento: 0.5
-    radio: 3
-    velocidad: 0.6
+    ancho: 5
+    alto: 4
+    profundidad: 2
+    velocidad: 0.3
+    giro: 6.0
+    potencia: 2.5
+    combustible: 600
 
 minions:
   costo-base: 300.0
