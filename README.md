@@ -68,19 +68,24 @@ pack queda **adentro** de `MinerCorp-Pack-1.0.0.jar`, y ese plugin se lo
 manda a cada jugador cuando entra. Sin MinerCorp-Pack todo sigue andando y
 los items se ven como items vanilla.
 
-Para usarlo en el server (Windows):
+Para usarlo en el server: copia `MinerCorp-Pack-1.0.0.jar` a `plugins\` y
+reinicia. Nada mas. Por defecto (`modo: url`) los jugadores bajan el pack de
+un link fijo que GitHub Actions actualiza solo en cada cambio de main:
 
-1. Copia `MinerCorp-Pack-1.0.0.jar` a `plugins\` con los demas y reinicia.
-2. Listo para jugar en tu PC o en tu red de casa: el plugin sirve el pack en
-   el puerto **8164**. Si Windows pregunta por el firewall, deja pasar Java.
-3. Si tus amigos entran desde afuera, abri en el router el puerto **8164
-   TCP** hacia la PC del server, igual que hiciste con el 25565.
-4. No hay que tocar `server.properties` (dejar `resource-pack=` vacio).
+https://github.com/roodrigobarbooza-del/McCorp/releases/download/resourcepack/mccorp-pack.zip
 
-Si preferis no abrir otro puerto, subi `build/mccorp-pack.zip` (sale de
-`tools\empaquetar-pack.ps1` o del artefacto "resourcepack" de GitHub
-Actions) a un link directo y en `plugins/MinerCorp-Pack/config.yml` pone
-`modo: url` y `url.direccion: <link>`; el sha1 lo calcula solo.
+Asi no hay que abrir puertos y anda tambien entrando por un tunel
+(SquidServers, playit). El plugin baja ese zip al arrancar para calcular su
+sha1, y lo vuelve a revisar cada 10 minutos por si hubo un pack nuevo. No hay
+que tocar `server.properties` (dejar `resource-pack=` vacio).
+
+Con `modo: propio` el plugin sirve el pack que trae adentro del jar en el
+puerto 8164. Solo anda si los jugadores llegan a ese puerto de la PC del
+server (la misma PC, la red de casa o el puerto abierto en el router); por
+tuneles no pasa. Sirve para probar texturas sin pasar por GitHub.
+
+En la consola queda a quien se le mando el pack, de que link y si lo cargo o
+fallo.
 
 Comandos: `/pack` te lo vuelve a mandar; `/pack info`, `/pack recargar` y
 `/pack reenviar <jugador|todos>` para admins.

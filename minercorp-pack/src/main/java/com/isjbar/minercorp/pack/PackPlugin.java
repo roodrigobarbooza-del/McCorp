@@ -13,14 +13,17 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
@@ -29,7 +32,9 @@ import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * MinerCorp-Pack: le manda a cada jugador el resource pack de McCorp al
@@ -46,7 +51,11 @@ public class PackPlugin extends JavaPlugin implements Listener, TabExecutor {
     private enum Modo { PROPIO, URL, APAGADO }
 
     private Modo modo = Modo.APAGADO;
+    /** Ultimo link que se le mando a cada jugador, para el log si falla. */
+    private final Map<UUID, URI> enviados = new ConcurrentHashMap<>();
     private PackServer server;
+    /** Modo url con sha1 automatico: revision periodica del zip remoto. */
+    private BukkitTask revision;
     /** Modo url: la direccion fija. Modo propio: null (se arma por jugador). */
     private volatile URI url;
     private volatile String sha1;
@@ -54,6 +63,7 @@ public class PackPlugin extends JavaPlugin implements Listener, TabExecutor {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        migrarConfig();
         getConfig().options().copyDefaults(true);
         saveConfig();
         cargar();
@@ -69,18 +79,36 @@ public class PackPlugin extends JavaPlugin implements Listener, TabExecutor {
         server = null;
     }
 
+    /**
+     * La version 1 del config venia en modo propio, que no anda entrando por
+     * tuneles (SquidServers, playit). Si sigue con lo que vino de fabrica, lo
+     * pasa a modo url con el link que publica GitHub Actions.
+     */
+    private void migrarConfig() {
+        if (getConfig().isSet("config-version")) return;
+        if ("propio".equalsIgnoreCase(getConfig().getString("modo", "").trim())
+                && getConfig().getString("url.direccion", "").isBlank()) {
+            getConfig().set("modo", "url");
+            getConfig().set("url.direccion", getConfig().getDefaults().getString("url.direccion"));
+            getLogger().info("Config viejo: paso a modo url con el link de GitHub (el modo propio no anda por tuneles).");
+        }
+        getConfig().set("config-version", 2);
+    }
+
     /** Lee el config y prepara el pack. Se puede llamar de nuevo para recargar. */
     private void cargar() {
         reloadConfig();
-        String valor = getConfig().getString("modo", "propio").trim().toUpperCase(Locale.ROOT);
+        String valor = getConfig().getString("modo", "url").trim().toUpperCase(Locale.ROOT);
         try {
             modo = Modo.valueOf(valor);
         } catch (IllegalArgumentException e) {
-            getLogger().warning("modo '" + valor + "' no existe (propio, url o apagado). Uso propio.");
-            modo = Modo.PROPIO;
+            getLogger().warning("modo '" + valor + "' no existe (url, propio o apagado). Uso url.");
+            modo = Modo.URL;
         }
         sha1 = null;
         url = null;
+        if (revision != null) revision.cancel();
+        revision = null;
         if (modo != Modo.PROPIO && server != null) {
             server.parar();
             server = null;
@@ -153,18 +181,36 @@ public class PackPlugin extends JavaPlugin implements Listener, TabExecutor {
             return;
         }
         getLogger().info("Bajando el pack de " + uri + " para calcular su sha1...");
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-            try (InputStream in = uri.toURL().openStream()) {
-                String calculado = sha1(in.readAllBytes());
-                Bukkit.getScheduler().runTask(this, () -> {
-                    if (!uri.equals(url)) return; // se recargo con otra url mientras bajaba
-                    sha1 = calculado;
-                    getLogger().info("sha1 del pack: " + calculado + ". Mandandolo a los que ya estan conectados.");
-                    Bukkit.getOnlinePlayers().forEach(this::enviar);
-                });
-            } catch (IOException e) {
-                getLogger().severe("No pude bajar el pack de " + uri + ": " + e.getMessage());
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> revisarRemoto(uri));
+        // El CI puede subir un pack nuevo con el server prendido: si el sha1
+        // queda viejo el cliente rechaza el zip. Se revisa cada 10 minutos.
+        revision = Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> revisarRemoto(uri),
+                20L * 60 * 10, 20L * 60 * 10);
+    }
+
+    /** Baja el zip de {@code uri} (fuera del hilo principal) y, si cambio, actualiza el sha1 y lo reenvia. */
+    private void revisarRemoto(URI uri) {
+        byte[] zip;
+        try {
+            URLConnection conexion = uri.toURL().openConnection();
+            conexion.setConnectTimeout(15_000);
+            conexion.setReadTimeout(30_000);
+            conexion.setRequestProperty("User-Agent", "MinerCorp-Pack");
+            try (InputStream in = conexion.getInputStream()) {
+                zip = in.readAllBytes();
             }
+        } catch (IOException e) {
+            if (sha1 == null) getLogger().severe("No pude bajar el pack de " + uri + ": " + e);
+            return;
+        }
+        String calculado = sha1(zip);
+        Bukkit.getScheduler().runTask(this, () -> {
+            if (modo != Modo.URL || !uri.equals(url) || calculado.equals(sha1)) return;
+            boolean primero = sha1 == null;
+            sha1 = calculado;
+            getLogger().info((primero ? "Pack listo (" : "Hay un pack nuevo (") + zip.length / 1024 + " KB, sha1 "
+                    + calculado + "). Mandandolo a los que estan conectados.");
+            Bukkit.getOnlinePlayers().forEach(this::enviar);
         });
     }
 
@@ -172,6 +218,8 @@ public class PackPlugin extends JavaPlugin implements Listener, TabExecutor {
     public boolean enviar(Player player) {
         if (modo == Modo.APAGADO || sha1 == null) return false;
         URI uri = modo == Modo.URL ? url : urlPropia(player);
+        enviados.put(player.getUniqueId(), uri);
+        getLogger().info("Mandando el pack a " + player.getName() + ": " + uri);
         ResourcePackInfo info = ResourcePackInfo.resourcePackInfo(PACK_ID, uri, sha1);
         player.sendResourcePacks(ResourcePackRequest.resourcePackRequest()
                 .packs(info)
@@ -211,18 +259,27 @@ public class PackPlugin extends JavaPlugin implements Listener, TabExecutor {
     }
 
     @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        enviados.remove(event.getPlayer().getUniqueId());
+    }
+
+    @EventHandler
     public void onStatus(PlayerResourcePackStatusEvent event) {
         if (!PACK_ID.equals(event.getID())) return;
         Player player = event.getPlayer();
         switch (event.getStatus()) {
             case FAILED_DOWNLOAD, INVALID_URL -> {
-                getLogger().warning(player.getName() + " no pudo bajar el pack (" + event.getStatus()
-                        + "). Si juega desde afuera, revisa que el puerto "
-                        + getConfig().getInt("propio.puerto", 8164) + " este abierto.");
+                URI uri = enviados.get(player.getUniqueId());
+                getLogger().warning(player.getName() + " no pudo bajar el pack (" + event.getStatus() + ") de " + uri
+                        + (modo == Modo.PROPIO
+                        ? ". El modo propio solo anda si el jugador llega al puerto " + getConfig().getInt("propio.puerto", 8164)
+                          + " de esta PC; entrando por un tunel (SquidServers, playit) no pasa. Usa modo: url."
+                        : ". Revisa que ese link baje el .zip en un navegador."));
                 player.sendMessage(Component.text("No se pudo bajar el pack de texturas. Proba /pack o avisale a un admin.",
                         NamedTextColor.RED));
             }
             case FAILED_RELOAD -> getLogger().warning(player.getName() + ": el pack bajo pero no cargo (FAILED_RELOAD).");
+            case SUCCESSFULLY_LOADED -> getLogger().info(player.getName() + " cargo el pack.");
             default -> {
             }
         }
