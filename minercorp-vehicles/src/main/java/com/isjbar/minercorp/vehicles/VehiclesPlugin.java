@@ -69,6 +69,7 @@ public class VehiclesPlugin extends JavaPlugin {
         legacy.migrateStoredDrills();
         for (World world : getServer().getWorlds()) {
             legacy.convert(world.getEntities());
+            vehicles.refreshOutdated(world.getEntities());
         }
         getLogger().info("MinerCorp-Vehicles habilitado - " + types.all().size() + " tipos de vehiculo.");
     }
@@ -80,13 +81,20 @@ public class VehiclesPlugin extends JavaPlugin {
         getServer().getServicesManager().unregisterAll(this);
     }
 
-    /** Relee config.yml: tipos, combustibles y reglas. Los vehiculos en el mundo toman los cambios al volver a subirse. */
+    /**
+     * Relee config.yml: tipos, combustibles y reglas. Los vehiculos estacionados
+     * se vuelven a armar si cambio su forma (por ejemplo, al prender el resource
+     * pack); los que se estan manejando toman los cambios al volver a subirse.
+     */
     public void reloadAll() {
         reloadConfig();
         this.types = VehicleTypes.load(getConfig(), getLogger());
         fuels.loadConfig(getConfig(), getLogger());
         vehicles.reloadSettings();
         registerIntegrations();
+        for (World world : getServer().getWorlds()) {
+            vehicles.refreshOutdated(world.getEntities());
+        }
     }
 
     /** Vende los vehiculos en la Gran Sede y toma los combustibles de Recursos, si estan instalados. */

@@ -11,6 +11,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Menus del garaje y del concesionario por comando. */
+/** Menus del garaje, del concesionario por comando y del panel de control del taladro. */
 public final class Menus {
 
     static final String CERRAR = "cerrar";
@@ -31,6 +32,10 @@ public final class Menus {
     static final String SACAR = "sacar:";
     static final String COMPRAR = "comprar:";
     static final String INFO = "info";
+    static final String MANEJAR = "manejar";
+    static final String CARGAR_INVENTARIO = "cargar-inventario";
+    static final String CARGAR_EMPRESA = "cargar-empresa";
+    static final String GUARDAR = "guardar";
 
     private Menus() {
     }
@@ -142,6 +147,45 @@ public final class Menus {
         }
         inv.setItem(49, item(plugin, Material.MINECART, "Garaje", NamedTextColor.GREEN, List.of("Volver al garaje"), GARAJE));
         inv.setItem(53, item(plugin, Material.BARRIER, "Cerrar", NamedTextColor.RED, List.of(), CERRAR));
+        player.openInventory(inv);
+    }
+
+    // ------------------------------------------------------- panel del taladro
+
+    /** Menu del panel de control, el bloque aparte detras del taladro. */
+    public static void openPanel(VehiclesPlugin plugin, Player player, BlockDisplay root) {
+        Optional<VehicleType> typeOpt = plugin.vehicles().typeOf(root);
+        if (typeOpt.isEmpty()) return;
+        VehicleType type = typeOpt.get();
+        MenuHolder holder = new MenuHolder(MenuHolder.Screen.PANEL, root.getUniqueId());
+        Inventory inv = plugin.getServer().createInventory(holder, 27,
+                Component.text("Panel - " + type.nombre(), NamedTextColor.DARK_GREEN));
+        holder.setInventory(inv);
+
+        double fuel = plugin.vehicles().fuelOf(root);
+        List<String> info = new ArrayList<>();
+        plugin.vehicles().ownerOf(root).flatMap(id -> plugin.mining().companies().getById(id))
+                .ifPresent(c -> info.add("Empresa: " + c.getName()));
+        info.add("Combustible: " + (int) Math.ceil(fuel) + "/" + (int) type.tanque() + " L");
+        if (type.perforacion() != null) {
+            info.add("Tunel: " + type.perforacion().ancho() + "x" + type.perforacion().alto()
+                    + ", " + type.perforacion().profundidad() + " de fondo");
+            info.add("Potencia x" + type.perforacion().potencia());
+        }
+        inv.setItem(4, item(plugin, type.icono(), type.nombre(), NamedTextColor.GOLD, info, INFO));
+
+        inv.setItem(10, item(plugin, Material.OAK_BOAT, "Manejar", NamedTextColor.GREEN,
+                List.of("Subirte a la cabina.", "W/S avanzar, A/D girar, Shift bajarte."), MANEJAR));
+        inv.setItem(12, item(plugin, Material.COAL, "Cargar desde tu inventario", NamedTextColor.YELLOW,
+                List.of("Usa: " + plugin.fuels().names(type.combustibles()),
+                        "Carga todo lo que entre en el tanque."), CARGAR_INVENTARIO));
+        if (type.combustibles().contains("carbon")) {
+            inv.setItem(14, item(plugin, Material.COAL_BLOCK, "Cargar con carbon de la empresa", NamedTextColor.YELLOW,
+                    List.of("Usa el carbon crudo de la empresa", "hasta llenar el tanque."), CARGAR_EMPRESA));
+        }
+        inv.setItem(16, item(plugin, Material.CHEST_MINECART, "Guardar en el garaje", NamedTextColor.AQUA,
+                List.of("Lo saca del mundo.", "Se vuelve a sacar con /garaje."), GUARDAR));
+        inv.setItem(26, item(plugin, Material.BARRIER, "Cerrar", NamedTextColor.RED, List.of(), CERRAR));
         player.openInventory(inv);
     }
 

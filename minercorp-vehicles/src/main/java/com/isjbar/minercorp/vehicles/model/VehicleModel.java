@@ -43,8 +43,10 @@ import java.util.UUID;
  * (con teleportDuration para que el cliente interpole) y avanza las
  * animaciones: ruedas que giran y doblan, punta del taladro, motor.
  *
- * Si el tipo tiene "item-model", en vez de piezas de bloque se dibuja con un
- * solo {@link ItemDisplay} con ese modelo de resource pack.
+ * Las piezas con modelo de resource pack ({@link PartDef#itemModel()}) son
+ * {@link ItemDisplay}; el resto, {@link BlockDisplay}. Si el tipo tiene
+ * "item-model" en el config, en vez de las piezas se dibuja con un solo
+ * ItemDisplay con ese modelo.
  */
 public final class VehicleModel {
 
@@ -58,9 +60,8 @@ public final class VehicleModel {
     private final Shape shape;
     private final Display root;
     private final List<Display> parts;
-    private final Map<Integer, BlockDisplay> tires;
-    private final Map<Integer, BlockDisplay> hubs;
-    private final BlockDisplay[] bits;
+    /** Piezas que se animan, con su definicion. */
+    private final List<Animated> animated;
     private final BlockDisplay motor;
 
     private Location last;
@@ -71,14 +72,14 @@ public final class VehicleModel {
     private float bitSpin;
     private int ticks;
 
-    private VehicleModel(Shape shape, Display root, List<Display> parts, Map<Integer, BlockDisplay> tires,
-                         Map<Integer, BlockDisplay> hubs, BlockDisplay[] bits, BlockDisplay motor) {
+    private record Animated(PartDef def, Display display) {
+    }
+
+    private VehicleModel(Shape shape, Display root, List<Display> parts, List<Animated> animated, BlockDisplay motor) {
         this.shape = shape;
         this.root = root;
         this.parts = parts;
-        this.tires = tires;
-        this.hubs = hubs;
-        this.bits = bits;
+        this.animated = animated;
         this.motor = motor;
         this.last = root.getLocation();
     }
@@ -91,48 +92,43 @@ public final class VehicleModel {
         base.setPitch(0);
         World world = base.getWorld();
         List<Display> parts = new ArrayList<>();
-        Map<Integer, BlockDisplay> tires = new HashMap<>();
-        Map<Integer, BlockDisplay> hubs = new HashMap<>();
-        BlockDisplay[] bits = new BlockDisplay[Shapes.BIT_PIECES.length];
+        List<Animated> animated = new ArrayList<>();
         BlockDisplay motor = null;
 
-        Display root;
+        Display root = null;
         if (type.itemModel() != null) {
-            NamespacedKey key = NamespacedKey.fromString(type.itemModel());
-            ItemStack stack = new ItemStack(Material.PAPER);
-            if (key != null) {
-                ItemMeta meta = stack.getItemMeta();
-                meta.setItemModel(key);
-                stack.setItemMeta(meta);
-            }
             float s = type.escalaItemModel();
             root = world.spawn(base, ItemDisplay.class, d -> {
                 setup(plugin, d, "chasis");
-                d.setItemStack(stack);
+                d.setItemStack(modelItem(type.itemModel()));
                 d.setTransformation(new Transformation(new Vector3f(0f, 0f, 0f), new Quaternionf(),
                         new Vector3f(s, s, s), new Quaternionf()));
             });
             parts.add(root);
         } else {
-            root = null;
             for (PartDef def : shape.parts()) {
-                BlockData data = def.kind() == PartDef.Kind.MOTOR ? motorData(false)
-                        : (def.slot() == null ? def.material() : type.color(def.slot(), def.material())).createBlockData();
-                BlockDisplay display = world.spawn(base, BlockDisplay.class, d -> {
-                    setup(plugin, d, def.role());
-                    d.setBlock(data);
-                    d.setTransformation(def.transform());
-                    if (def.glow()) d.setBrightness(new Display.Brightness(15, 15));
-                });
+                Display display;
+                if (def.itemModel() != null) {
+                    display = world.spawn(base, ItemDisplay.class, d -> {
+                        setup(plugin, d, def.role());
+                        d.setItemStack(modelItem(def.itemModel()));
+                        d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+                        d.setTransformation(def.transform());
+                    });
+                } else {
+                    BlockData data = def.kind() == PartDef.Kind.MOTOR ? motorData(false)
+                            : (def.slot() == null ? def.material() : type.color(def.slot(), def.material())).createBlockData();
+                    display = world.spawn(base, BlockDisplay.class, d -> {
+                        setup(plugin, d, def.role());
+                        d.setBlock(data);
+                        d.setTransformation(def.transform());
+                        if (def.glow()) d.setBrightness(new Display.Brightness(15, 15));
+                    });
+                }
                 parts.add(display);
                 if (root == null) root = display;
-                switch (def.kind()) {
-                    case TIRE -> tires.put(def.index(), display);
-                    case HUB -> hubs.put(def.index(), display);
-                    case BIT -> bits[def.index()] = display;
-                    case MOTOR -> motor = display;
-                    default -> { }
-                }
+                if (def.kind() == PartDef.Kind.MOTOR && display instanceof BlockDisplay b) motor = b;
+                else if (def.kind() != PartDef.Kind.STATIC) animated.add(new Animated(def, display));
             }
         }
 
@@ -156,7 +152,7 @@ public final class VehicleModel {
             ids.append(part.getUniqueId());
         }
         root.getPersistentDataContainer().set(partsKey(plugin), PersistentDataType.STRING, ids.toString());
-        return new VehicleModel(shape, root, parts, tires, hubs, bits, motor);
+        return new VehicleModel(shape, root, parts, animated, motor);
     }
 
     /** Recupera un modelo ya armado a partir del UUID de su raiz ({@link #rootId()}). */
@@ -167,33 +163,27 @@ public final class VehicleModel {
 
         List<Display> parts = new ArrayList<>();
         parts.add(root);
-        Map<Integer, BlockDisplay> tires = new HashMap<>();
-        Map<Integer, BlockDisplay> hubs = new HashMap<>();
-        BlockDisplay[] bits = new BlockDisplay[Shapes.BIT_PIECES.length];
-        BlockDisplay motor = null;
-        List<Display> all = new ArrayList<>(List.of(root));
         for (String id : ids.split(",")) {
             if (id.isBlank()) continue;
-            if (plugin.getServer().getEntity(UUID.fromString(id)) instanceof Display part) {
-                parts.add(part);
-                all.add(part);
-            }
+            if (plugin.getServer().getEntity(UUID.fromString(id)) instanceof Display part) parts.add(part);
         }
-        for (Display part : all) {
+        Map<String, PartDef> byRole = new HashMap<>();
+        for (PartDef def : shape.parts()) byRole.put(def.role(), def);
+        List<Animated> animated = new ArrayList<>();
+        BlockDisplay motor = null;
+        for (Display part : parts) {
             String role = part.getPersistentDataContainer().get(partKey(plugin), PersistentDataType.STRING);
-            if (role == null || !(part instanceof BlockDisplay b)) continue;
-            for (PartDef def : shape.parts()) {
-                if (!def.role().equals(role)) continue;
-                switch (def.kind()) {
-                    case TIRE -> tires.put(def.index(), b);
-                    case HUB -> hubs.put(def.index(), b);
-                    case BIT -> bits[def.index()] = b;
-                    case MOTOR -> motor = b;
-                    default -> { }
-                }
+            PartDef def = role == null ? null : byRole.get(role);
+            if (def == null || def.kind() == PartDef.Kind.STATIC) continue;
+            // Una pieza de bloque donde la forma espera un modelo (o al reves) no se anima.
+            if ((def.itemModel() != null) != (part instanceof ItemDisplay)) continue;
+            if (def.kind() == PartDef.Kind.MOTOR) {
+                if (part instanceof BlockDisplay b) motor = b;
+            } else {
+                animated.add(new Animated(def, part));
             }
         }
-        return Optional.of(new VehicleModel(shape, root, parts, tires, hubs, bits, motor));
+        return Optional.of(new VehicleModel(shape, root, parts, animated, motor));
     }
 
     /** UUIDs de todas las piezas de un modelo (raiz incluida), aunque no esten cargadas. */
@@ -284,25 +274,42 @@ public final class VehicleModel {
     // ------------------------------------------------------------- animacion
 
     private void animate(boolean rolling) {
-        // Ruedas: doblan con la direccion y la llanta gira al andar.
+        // Ruedas: doblan con la direccion y giran al andar. Punta: gira al perforar.
         boolean steerChanged = Math.abs(steer - shownSteer) > 1.0E-3;
         shownSteer = steer;
-        for (int i = 0; i < shape.wheels().size(); i++) {
-            WheelDef w = shape.wheels().get(i);
-            if (w.steers() && steerChanged) {
-                update(tires.get(i), Shapes.tireTransform(w, steer));
-            }
-            if (rolling || (w.steers() && steerChanged)) {
-                update(hubs.get(i), Shapes.hubTransform(w, steer, wheelSpin));
+        boolean spinBit = drilling && shape.bitAxis() != null;
+        if (spinBit) bitSpin = (bitSpin + BIT_SPIN_STEP) % 360f;
+        for (Animated a : animated) {
+            PartDef def = a.def();
+            switch (def.kind()) {
+                case TIRE -> {
+                    WheelDef w = shape.wheels().get(def.index());
+                    if (w.steers() && steerChanged) update(a.display(), Shapes.tireTransform(w, steer));
+                }
+                case HUB -> {
+                    WheelDef w = shape.wheels().get(def.index());
+                    if (rolling || (w.steers() && steerChanged)) {
+                        update(a.display(), Shapes.hubTransform(w, steer, wheelSpin));
+                    }
+                }
+                case WHEEL -> {
+                    WheelDef w = shape.wheels().get(def.index());
+                    if (rolling || (w.steers() && steerChanged)) {
+                        update(a.display(), Shapes.wheelModelTransform(def, w, steer, wheelSpin));
+                    }
+                }
+                // Cada pieza de bloques gira un poco desfasada para que se note el giro.
+                case BIT -> {
+                    if (spinBit) update(a.display(), Shapes.bitTransform(def.index(), bitSpin + def.index() * 15f));
+                }
+                case BIT_MODEL -> {
+                    if (spinBit) update(a.display(), Shapes.bitModelTransform(def, bitSpin));
+                }
+                default -> { }
             }
         }
 
-        if (!drilling || shape.bitAxis() == null) return;
-        bitSpin = (bitSpin + BIT_SPIN_STEP) % 360f;
-        for (int i = 0; i < bits.length; i++) {
-            // Cada pieza gira un poco desfasada para que se note el giro.
-            update(bits[i], Shapes.bitTransform(i, bitSpin + i * 15f));
-        }
+        if (!spinBit) return;
         World world = last.getWorld();
         Vector3f axis = shape.bitAxis();
         world.spawnParticle(Particle.ELECTRIC_SPARK, local(last, axis.x, axis.y, shape.bitTipZ()),
@@ -312,11 +319,12 @@ public final class VehicleModel {
             world.spawnParticle(Particle.LARGE_SMOKE, local(last, e.x, e.y, e.z), 1, 0.05, 0.05, 0.05, 0.01);
         }
         if (ticks % 10 == 0) {
-            world.playSound(local(last, 0f, axis.y, 1.5f), Sound.BLOCK_GRINDSTONE_USE, SoundCategory.BLOCKS, 0.5f, 0.7f);
+            world.playSound(local(last, 0f, axis.y, shape.bitTipZ() - 0.5f), Sound.BLOCK_GRINDSTONE_USE,
+                    SoundCategory.BLOCKS, 0.5f, 0.7f);
         }
     }
 
-    private static void update(BlockDisplay display, Transformation transformation) {
+    private static void update(Display display, Transformation transformation) {
         if (display == null || !display.isValid()) return;
         display.setInterpolationDelay(0);
         display.setInterpolationDuration(ANIM_TICKS);
@@ -357,6 +365,18 @@ public final class VehicleModel {
             furnace.setLit(lit);
         }
         return data;
+    }
+
+    /** Un papel con el modelo del resource pack (el item no importa, solo su item_model). */
+    private static ItemStack modelItem(String model) {
+        ItemStack stack = new ItemStack(Material.PAPER);
+        NamespacedKey key = NamespacedKey.fromString(model);
+        if (key != null) {
+            ItemMeta meta = stack.getItemMeta();
+            meta.setItemModel(key);
+            stack.setItemMeta(meta);
+        }
+        return stack;
     }
 
     private static NamespacedKey partKey(Plugin plugin) {
