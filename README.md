@@ -96,14 +96,17 @@ andaba lentisimo y todos los tiers iban igual.
 
 ### Notas
 
+- Golpear el taladro (click izquierdo) lo guarda en el garaje de la empresa,
+  con su combustible. Se vuelve a sacar sin pagar desde `/empresa menu` >
+  Taladro-vehiculo (ultima fila) o con `/empresa taladro sacar`.
 - Los taladros-bote de la version anterior se convierten solos al vehiculo
   nuevo (misma empresa y tier, tanque vacio) cuando se carga su chunk.
 - Si la raiz se borra con `/kill`, la carroceria y el asiento quedan sueltos:
   `/empresa taladro quitar` cerca de ellos los limpia.
 - La altura del asiento se ajusta con `taladros.efectos.altura-asiento`.
-- Si ya tenias un `config.yml` generado, borrale la seccion `taladros:` (o
-  el archivo) para que se regenere con las opciones nuevas. Las claves que
-  falten usan los valores por defecto del plugin.
+- Al arrancar, el plugin completa tu `config.yml` con las claves nuevas que
+  falten. Si todavia tenia la seccion `taladros:` del taladro-bote (con
+  `radio`), la reemplaza entera por la nueva y lo avisa en la consola.
 
 ## Comandos (`/empresa`, alias `/mc`)
 
@@ -116,6 +119,8 @@ andaba lentisimo y todos los tiers iban igual.
 /empresa disolver
 /empresa taladro comprar <tier>        (parado dentro de tu territorio)
 /empresa taladro cargar [cantidad]     (combustible con carbon crudo de la empresa)
+/empresa taladro guardar               (guarda el taladro cercano en el garaje de la empresa)
+/empresa taladro sacar [numero]        (saca un taladro del garaje, parado en tu territorio)
 /empresa taladro quitar                (desarma el taladro mas cercano)
 /empresa minion <colocar|quitar|lista>
 /empresa refinar <cantidad>
@@ -124,6 +129,7 @@ andaba lentisimo y todos los tiers iban igual.
 /empresa menu                          (abre el HUD de cofre con botones para lo de arriba)
 /saldo
 /saldo dar <monto> [jugador]           (admin - minercorp.admin, para testear)
+/empresa darcarbon <cantidad>          (admin - suma carbon crudo a tu empresa, para testear el taladro)
 ```
 
 ## Aviso de territorio y menu HUD

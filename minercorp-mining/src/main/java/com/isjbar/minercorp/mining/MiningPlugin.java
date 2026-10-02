@@ -29,6 +29,7 @@ public class MiningPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         getDataFolder().mkdirs();
+        actualizarConfig();
 
         this.territoryAPI = loadService(TerritoryAPI.class);
         this.economyAPI = loadService(EconomyAPI.class);
@@ -68,6 +69,26 @@ public class MiningPlugin extends JavaPlugin {
         if (vehicleManager != null) vehicleManager.stop();
         if (obraManager != null) obraManager.stop();
         if (companyManager != null) companyManager.save();
+    }
+
+    /**
+     * Completa el config.yml del server con las claves nuevas del plugin. Bukkit
+     * no lo hace solo: si una seccion falta en el archivo, getConfigurationSection
+     * devuelve una seccion vacia en vez de la del jar, y por eso con un config
+     * viejo el taladro no reconocia el carbon como combustible.
+     *
+     * La seccion "taladros" del taladro-bote anterior (tiers con "radio" y una
+     * "velocidad" pensada para botes) se reemplaza entera por la nueva.
+     */
+    private void actualizarConfig() {
+        boolean taladroViejo = getConfig().isSet("taladros.intervalo-ticks")
+                || getConfig().isSet("taladros.tier-1.radio");
+        if (taladroViejo) {
+            getConfig().set("taladros", null);
+            getLogger().warning("config.yml tenia la seccion 'taladros' del taladro-bote anterior: se reemplazo por la nueva.");
+        }
+        getConfig().options().copyDefaults(true);
+        saveConfig();
     }
 
     private <T> T loadService(Class<T> clazz) {

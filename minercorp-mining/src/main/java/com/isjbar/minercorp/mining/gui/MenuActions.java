@@ -8,6 +8,7 @@ final class MenuActions {
     static final String RECLAMAR = "reclamar";
     static final String TALADRO_MENU = "taladro_menu";
     static final String TALADRO_TIER_PREFIX = "taladro_tier_";
+    static final String TALADRO_SACAR_PREFIX = "taladro_sacar_";
     static final String MINION_COLOCAR = "minion_colocar";
     static final String REFINAR_TODO = "refinar_todo";
     static final String VENDER_CRUDO_TODO = "vender_crudo_todo";
