@@ -64,6 +64,11 @@ public class ResourcesPlugin extends JavaPlugin implements ResourcesAPI {
         getServer().getServicesManager().register(ResourcesAPI.class, this, this, ServicePriority.Normal);
         machines.start();
 
+        if (getServer().getPluginManager().getPlugin("MinerCorp-GranSede") != null) {
+            int vendidas = GranSedeShop.registrar(this);
+            if (vendidas > 0) getLogger().info(vendidas + " maquinas a la venta en la Gran Sede.");
+        }
+
         getLogger().info("MinerCorp-Recursos habilitado - " + resources.all().size() + " recursos, "
                 + machines.types().size() + " tipos de maquina, " + machines.all().size() + " maquinas colocadas.");
     }

@@ -5,6 +5,8 @@ api-version: '26.3'
 author: isjbar
 description: Recursos (carbon, petroleo y derivados) y maquinas para extraerlos y refinarlos. Requiere MinerCorp-Territory y MinerCorp-Economy. Expone ResourcesAPI via ServicesManager.
 depend: [MinerCorp-Territory, MinerCorp-Economy]
+# Con la Gran Sede instalada, las maquinas se venden en su tienda.
+softdepend: [MinerCorp-GranSede]
 
 commands:
   recursos:

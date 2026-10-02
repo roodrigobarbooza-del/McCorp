@@ -29,8 +29,8 @@ mas que el carbon.
 
 ## Como se usa
 
-1. Un admin da la maquina: `/recursos dar <jugador> refineria` (mas adelante se
-   compra en la Gran Sede).
+1. Se compra en la tienda "Taladros" de la Gran Sede (si esta instalada), o un
+   admin la da con `/recursos dar <jugador> refineria`.
 2. Colocala en un chunk de tu empresa. El modelo se arma solo arriba del bloque.
 3. Click derecho: panel con entrada, combustible y salidas. Shift + click
    desde tu inventario manda cada cosa a su lugar. Shift + click derecho a la

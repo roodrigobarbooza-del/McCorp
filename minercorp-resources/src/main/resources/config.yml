@@ -177,6 +177,11 @@ petroleo:
   # Cambiarlo reubica todos los yacimientos (no hace falta tocarlo).
   sal: 7341
 
+# Con MinerCorp-GranSede instalado, cada maquina con precio se vende en esta
+# tienda (de la billetera personal del jugador).
+gran-sede:
+  tienda: taladros
+
 # Cada cuantos segundos se guardan maquinas y yacimientos si cambiaron.
 guardado-segundos: 60
 
