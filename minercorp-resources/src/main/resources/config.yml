@@ -1,0 +1,190 @@
+# ============================================
+#  MinerCorp-Recursos - configuracion
+# ============================================
+#
+# Recursos que no son de Minecraft (o versiones "industriales" de los que si
+# existen) y las maquinas que los extraen y los transforman. El refinado ya no
+# es por comando: hay que colocar la maquina en el territorio de tu empresa,
+# cargarle materia prima y combustible, y retirar lo que produce.
+
+# --------------------------------------------------------------------------
+# Recursos. Cada uno es un item vanilla con nombre y una marca interna, asi
+# que no se confunde con el item vanilla del mismo material: no sirve en
+# hornos, mesas de crafteo ni se puede usar/colocar.
+#   material: item vanilla que se ve en el inventario
+#   color: color del nombre (hex)
+#   precio: lo que paga /recursos vender por unidad
+# --------------------------------------------------------------------------
+recursos:
+  carbon_crudo:
+    nombre: "Carbon crudo"
+    material: COAL
+    color: "#8a8a8a"
+    precio: 2.0
+    descripcion:
+      - "Recien salido de la veta, con piedra y humedad."
+      - "Llevalo a un Horno de coque."
+  coque:
+    nombre: "Coque"
+    material: CHARCOAL
+    color: "#c9c9d6"
+    precio: 6.0
+    descripcion:
+      - "Carbon cocido sin aire a 1000 grados."
+      - "Quema mas tiempo que el carbon."
+  alquitran:
+    nombre: "Alquitran"
+    material: BLACK_DYE
+    color: "#5a4a3a"
+    precio: 3.0
+    descripcion:
+      - "Subproducto del horno de coque."
+  petroleo_crudo:
+    nombre: "Barril de petroleo crudo"
+    material: INK_SAC
+    color: "#3b3b3b"
+    precio: 8.0
+    descripcion:
+      - "Espeso y negro. Hay que refinarlo."
+      - "Llevalo a una Refineria."
+  gasolina:
+    nombre: "Bidon de gasolina"
+    material: ORANGE_DYE
+    color: "#ff9a1f"
+    precio: 14.0
+    descripcion:
+      - "Combustible para autos y camionetas."
+  diesel:
+    nombre: "Bidon de diesel"
+    material: YELLOW_DYE
+    color: "#e8d14a"
+    precio: 12.0
+    descripcion:
+      - "Combustible para camiones, taladros y maquinas."
+  asfalto:
+    nombre: "Asfalto"
+    material: BLACK_CONCRETE_POWDER
+    color: "#4a4a4a"
+    precio: 4.0
+    descripcion:
+      - "Lo mas pesado del barril. Sirve para rutas."
+  azufre:
+    nombre: "Azufre"
+    material: GLOWSTONE_DUST
+    color: "#f2e85c"
+    precio: 5.0
+    descripcion:
+      - "Se le saca al petroleo al refinarlo."
+
+# --------------------------------------------------------------------------
+# Combustibles: cuantos segundos de trabajo da cada unidad. La clave es un id
+# de recurso (de arriba) o un material vanilla. Cada maquina elige cuales
+# acepta en su lista "combustibles".
+# --------------------------------------------------------------------------
+combustibles:
+  COAL: 20
+  CHARCOAL: 20
+  COAL_BLOCK: 180
+  carbon_crudo: 12
+  coque: 60
+  diesel: 120
+  gasolina: 80
+
+# --------------------------------------------------------------------------
+# Maquinas. Se dan con /recursos dar <jugador> <id> (mas adelante se compran
+# en la Gran Sede) y se colocan como un bloque, solo en territorio de tu
+# empresa. Click derecho abre el panel. Trabajan mientras el chunk esta
+# cargado, igual que un horno.
+#   tipo: veta-carbon (extrae de la veta del chunk), petroleo (extrae del
+#         yacimiento del chunk) o proceso (transforma la entrada)
+#   bloque: bloque que se coloca; el modelo de arriba lo decide "modelo"
+#   ciclo-segundos: cuanto tarda cada ciclo (con combustible)
+# --------------------------------------------------------------------------
+maquinas:
+  perforadora_carbon:
+    nombre: "Perforadora de carbon"
+    tipo: veta-carbon
+    bloque: LODESTONE
+    modelo: perforadora
+    precio: 800.0
+    ciclo-segundos: 10
+    # Unidades que saca de la veta por ciclo (1 unidad = 1 carbon crudo).
+    extrae: 4
+    salida: carbon_crudo
+    combustibles: [COAL, CHARCOAL, COAL_BLOCK, carbon_crudo, coque, diesel]
+    descripcion:
+      - "Saca carbon crudo de la veta del chunk"
+      - "sin tener que manejar el taladro."
+  bomba_petroleo:
+    nombre: "Bomba de petroleo"
+    tipo: petroleo
+    bloque: POLISHED_BLACKSTONE
+    modelo: bomba
+    precio: 2500.0
+    ciclo-segundos: 15
+    extrae: 1
+    salida: petroleo_crudo
+    combustibles: [COAL, CHARCOAL, COAL_BLOCK, coque, diesel]
+    descripcion:
+      - "Bombea petroleo crudo si el chunk"
+      - "tiene un yacimiento (/recursos sondear)."
+  horno_coque:
+    nombre: "Horno de coque"
+    tipo: proceso
+    bloque: BRICKS
+    modelo: horno
+    precio: 600.0
+    ciclo-segundos: 8
+    entrada:
+      carbon_crudo: 2
+    salidas:
+      - {recurso: coque, cantidad: 1}
+      - {recurso: alquitran, cantidad: 1, probabilidad: 0.25}
+    combustibles: [COAL, CHARCOAL, COAL_BLOCK, carbon_crudo, coque]
+    descripcion:
+      - "Cuece carbon crudo sin aire:"
+      - "sale coque y algo de alquitran."
+  refineria:
+    nombre: "Refineria"
+    tipo: proceso
+    bloque: IRON_BLOCK
+    modelo: refineria
+    precio: 4000.0
+    ciclo-segundos: 12
+    entrada:
+      petroleo_crudo: 1
+    # Destilacion fraccionada: de cada barril sale sobre todo gasolina, una
+    # parte de diesel y lo mas pesado (asfalto). Al desulfurar sale azufre.
+    salidas:
+      - {recurso: gasolina, cantidad: 1}
+      - {recurso: diesel, cantidad: 1, probabilidad: 0.6}
+      - {recurso: asfalto, cantidad: 1, probabilidad: 0.3}
+      - {recurso: azufre, cantidad: 1, probabilidad: 0.1}
+    combustibles: [COAL, CHARCOAL, COAL_BLOCK, coque, diesel]
+    descripcion:
+      - "Separa el crudo en gasolina, diesel,"
+      - "asfalto y azufre."
+
+# --------------------------------------------------------------------------
+# Yacimientos de petroleo. Cada chunk del mundo normal tiene o no un
+# yacimiento, decidido por la semilla del mundo (siempre el mismo para el
+# mismo chunk). Se agotan a medida que se bombean.
+# --------------------------------------------------------------------------
+petroleo:
+  probabilidad-chunk: 0.12
+  barriles-min: 200
+  barriles-max: 1200
+  # Cambiarlo reubica todos los yacimientos (no hace falta tocarlo).
+  sal: 7341
+
+# Con MinerCorp-GranSede instalado, cada maquina con precio se vende en esta
+# tienda (de la billetera personal del jugador).
+gran-sede:
+  tienda: taladros
+
+# Cada cuantos segundos se guardan maquinas y yacimientos si cambiaron.
+guardado-segundos: 60
+
+efectos:
+  particulas: true
+  sonidos: true

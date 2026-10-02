@@ -1,0 +1,23 @@
+name: MinerCorp-Recursos
+version: '${project.version}'
+main: com.isjbar.minercorp.resources.ResourcesPlugin
+api-version: '26.3'
+author: isjbar
+description: Recursos (carbon, petroleo y derivados) y maquinas para extraerlos y refinarlos. Requiere MinerCorp-Territory y MinerCorp-Economy. Expone ResourcesAPI via ServicesManager.
+depend: [MinerCorp-Territory, MinerCorp-Economy]
+# Con la Gran Sede instalada, las maquinas se venden en su tienda.
+softdepend: [MinerCorp-GranSede]
+
+commands:
+  recursos:
+    description: Recursos y maquinas de MinerCorp
+    usage: /recursos <sondear|vender|lista|dar>
+    aliases: [rec]
+
+permissions:
+  minercorp.use:
+    description: Permite usar los comandos basicos de MinerCorp
+    default: true
+  minercorp.admin:
+    description: Dar recursos y maquinas, y colocar o romper maquinas en cualquier lado
+    default: op

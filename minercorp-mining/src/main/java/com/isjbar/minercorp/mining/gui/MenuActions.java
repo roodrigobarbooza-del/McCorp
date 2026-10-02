@@ -10,7 +10,7 @@ final class MenuActions {
     static final String TALADRO_TIER_PREFIX = "taladro_tier_";
     static final String TALADRO_SACAR_PREFIX = "taladro_sacar_";
     static final String MINION_COLOCAR = "minion_colocar";
-    static final String REFINAR_TODO = "refinar_todo";
+    static final String SACAR_CARBON = "sacar_carbon";
     static final String VENDER_CRUDO_TODO = "vender_crudo_todo";
     static final String VENDER_REFINADO_TODO = "vender_refinado_todo";
     static final String VOLVER = "volver";
