@@ -1,7 +1,7 @@
 # MinerCorp
 
 Sistema de "trabajos" para servidores Paper/Spigot, empezando por mineria de
-carbon. Esta repartido en 3 plugins independientes conectados por interfaces
+carbon. Esta repartido en 4 plugins independientes conectados por interfaces
 estilo Vault (via el `ServicesManager` de Bukkit):
 
 - **MinerCorp-Territory**: reclamo de chunks y vetas de mineral. No sabe que
@@ -17,6 +17,10 @@ estilo Vault (via el `ServicesManager` de Bukkit):
 - **MinerCorp-Recursos**: petroleo y otros recursos industriales, y las
   maquinas que los extraen y refinan (perforadora, bomba de petroleo, horno de
   coque, refineria). Ver [minercorp-resources/README.md](minercorp-resources/README.md).
+- **MinerCorp-GranSede**: el lugar central del servidor. Tiendas atendidas
+  por vendedores (vehiculos, taladros, ferreteria) y una mina y un bosque
+  publicos que pagan jornal para los primeros fondos. Solo depende de
+  Economy; los demas plugins le registran productos via `GranSedeAPI`.
 
 ## Requisitos
 
@@ -34,17 +38,18 @@ estilo Vault (via el `ServicesManager` de Bukkit):
 mvn clean package
 ```
 
-Esto genera 3 jars (uno por modulo):
+Esto genera 4 jars (uno por modulo):
 
 ```
 minercorp-territory/target/MinerCorp-Territory-1.0.0.jar
 minercorp-economy/target/MinerCorp-Economy-1.0.0.jar
 minercorp-mining/target/MinerCorp-Mining-1.0.0.jar
+minercorp-gransede/target/MinerCorp-GranSede-1.0.0.jar
 ```
 
 ## Instalar
 
-Copia los 3 jars a la carpeta `plugins/` del servidor. El orden de carga lo
+Copia los jars a la carpeta `plugins/` del servidor. El orden de carga lo
 resuelve Bukkit solo (Mining declara `depend: [MinerCorp-Territory,
 MinerCorp-Economy]` en su `plugin.yml`), pero necesitas los 3 presentes:
 Mining se deshabilita solo si no encuentra las otras dos APIs registradas.
@@ -110,6 +115,41 @@ andaba lentisimo y todos los tiers iban igual.
 - Al arrancar, el plugin completa tu `config.yml` con las claves nuevas que
   falten. Si todavia tenia la seccion `taladros:` del taladro-bote (con
   `radio`), la reemplaza entera por la nueva y lo avisa en la consola.
+
+## La Gran Sede
+
+Lugar central del servidor (no confundir con la sede de cada empresa). El
+edificio lo construyen los admins; el plugin pone las reglas:
+
+1. Marca las esquinas con `/gransede pos1` y `/gransede pos2` y crea la zona
+   con `/gransede zona crear <nombre> <SEDE|MINA|BOSQUE>`. En SEDE no se rompe
+   ni se pone nada, sin PvP, mobs hostiles, fuego ni explosiones. Una MINA o
+   BOSQUE adentro de la SEDE tiene sus propias reglas.
+2. `/gransede zona spawn` marca el punto de llegada (jugadores nuevos y
+   `/gransede ir`).
+3. `/gransede npc crear <concesionaria|taladros|ferreteria>` pone un
+   vendedor donde estas parado; `/gransede npc borrar` mirandolo lo saca.
+4. Un admin en **creativo** puede construir en todas las zonas.
+
+En la mina y el bosque solo se rompen los bloques de `trabajos.*.pago`: cada
+uno paga ese jornal a la billetera, no suelta items, queda como bloque agotado
+y vuelve solo (la mina sortea mineral nuevo por peso). Hay un tope por hora
+por jugador (`trabajos.tope-por-hora`).
+
+Las tiendas venden items vanilla o comandos de consola definidos en
+`tiendas.*.productos`, mas lo que registren otros plugins:
+
+```java
+GranSedeAPI api = Bukkit.getServicesManager().load(GranSedeAPI.class);
+api.registrarProducto(new Producto("camion", "concesionaria", "Camion",
+        new ItemStack(Material.MINECART), List.of("Carga 27 stacks"), 2500.0,
+        player -> vehiculos.entregar(player, "camion")));
+```
+
+Se cobra de la billetera personal; si `entregar` devuelve false, se devuelve
+el dinero. Un producto creado con `cobraPropio = true` lo cobra el plugin que
+lo registro (por ejemplo de la cuenta de la empresa) y la Gran Sede solo
+muestra el precio.
 
 ## Comandos (`/empresa`, alias `/mc`)
 
