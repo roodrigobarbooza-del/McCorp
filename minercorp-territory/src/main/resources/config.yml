@@ -9,3 +9,10 @@ veta:
 # Cada cuantos segundos se guardan las vetas si cambiaron (el taladro ya no
 # guarda a disco por cada bloque extraido).
 guardado-segundos: 30
+
+proteccion:
+  # Si es true, ninguna explosion (TNT, creepers, camas, etc) rompe bloques,
+  # marcos ni minions dentro de un territorio reclamado
+  explosiones: true
+  # Si es true, el fuego no se propaga ni quema bloques dentro de un territorio reclamado
+  fuego: true

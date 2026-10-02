@@ -1,6 +1,7 @@
 package com.isjbar.minercorp.territory;
 
 import com.isjbar.minercorp.territory.api.TerritoryAPI;
+import com.isjbar.minercorp.territory.listeners.EnvironmentProtectionListener;
 import com.isjbar.minercorp.territory.listeners.ProtectionListener;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -19,6 +20,11 @@ public class TerritoryPlugin extends JavaPlugin {
 
         getServer().getServicesManager().register(TerritoryAPI.class, service, this, ServicePriority.Normal);
         getServer().getPluginManager().registerEvents(new ProtectionListener(service), this);
+        getServer().getPluginManager().registerEvents(new EnvironmentProtectionListener(
+                service,
+                getConfig().getBoolean("proteccion.explosiones", true),
+                getConfig().getBoolean("proteccion.fuego", true)
+        ), this);
         getServer().getPluginManager().registerEvents(new TerritoryEntryListener(manager), this);
 
         long guardado = Math.max(20L, getConfig().getLong("guardado-segundos", 30) * 20L);
