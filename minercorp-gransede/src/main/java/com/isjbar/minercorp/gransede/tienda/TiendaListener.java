@@ -72,6 +72,15 @@ public class TiendaListener implements Listener {
     }
 
     private void comprar(Player player, Producto p) {
+        if (p.cobraPropio()) {
+            // El plugin dueno del producto cobra y avisa si no se pudo.
+            if (TiendaManager.entregarSeguro(p, player, logger)) {
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_YES, 1f, 1f);
+            } else {
+                player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            }
+            return;
+        }
         if (!economy.withdraw(player.getUniqueId(), p.precio())) {
             player.sendMessage(Component.text("No te alcanza: " + p.nombre() + " cuesta " + TiendaMenu.dinero(p.precio())
                     + " y tenes " + TiendaMenu.dinero(economy.getBalance(player.getUniqueId())) + ".", NamedTextColor.RED));
