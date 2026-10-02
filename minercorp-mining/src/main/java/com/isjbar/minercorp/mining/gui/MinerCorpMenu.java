@@ -50,7 +50,7 @@ public class MinerCorpMenu {
         inv.setItem(10, item(plugin, Material.BOOK, "Info de " + company.getName(), NamedTextColor.AQUA,
                 List.of(
                         "Nivel " + company.getLevel(),
-                        "Balance: " + round(plugin.economy().getBalance(company.getId())),
+                        "Balance: " + plugin.economy().format(plugin.economy().getBalance(company.getId())),
                         "Carbon crudo: " + round(company.getRawCoal()),
                         "Carbon refinado: " + round(company.getRefinedCoal()),
                         "Territorios: " + plugin.territory().countClaims(company.getId()) + " / " + plugin.levels().chunksPermitidos(company.getLevel()),
