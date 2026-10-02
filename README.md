@@ -146,8 +146,23 @@ sueltos cerca.
 
 ## La Gran Sede
 
-Lugar central del servidor (no confundir con la sede de cada empresa). El
-edificio lo construyen los admins; el plugin pone las reglas:
+Lugar central del servidor (no confundir con la sede de cada empresa).
+
+**La construye el plugin.** `/gransede construir` te da el *Plano de la Gran
+Sede*. Con el en la mano miras al suelo donde va el centro: ves el contorno
+de 63 x 63, la mina (gris), el bosque (verde), los vendedores (dorado) y el
+punto de llegada (celeste). La entrada queda del lado donde estas parado.
+Clic derecho, `[Confirmar]`, y el plugin despeja el terreno y levanta todo
+por etapas con la misma animacion de la obra de la sede de empresa:
+porton y muralla, avenida con faroles, concesionaria con estacionamiento,
+taller de taladros, ferreteria, plaza con fuente, el edificio central de dos
+pisos, un cerro de piedra con vetas y tunel, y un bosque. Al terminar crea
+las zonas `gran-sede`, `gran-sede-mina` y `gran-sede-bosque`, marca el spawn
+y pone los vendedores. `/gransede construir estado|cancelar` para seguirla o
+frenarla (si se reinicia el server, sigue sola). Se puede reemplazar por un
+`.nbt` propio (ver `obra.archivo-estructura` en el config).
+
+Tambien se puede armar a mano:
 
 1. Marca las esquinas con `/gransede pos1` y `/gransede pos2` y crea la zona
    con `/gransede zona crear <nombre> <SEDE|MINA|BOSQUE>`. En SEDE no se rompe

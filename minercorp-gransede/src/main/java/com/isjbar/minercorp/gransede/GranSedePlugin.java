@@ -3,6 +3,8 @@ package com.isjbar.minercorp.gransede;
 import com.isjbar.minercorp.economy.api.EconomyAPI;
 import com.isjbar.minercorp.gransede.api.GranSedeAPI;
 import com.isjbar.minercorp.gransede.npc.VendedorListener;
+import com.isjbar.minercorp.gransede.obra.ObraGranSedeManager;
+import com.isjbar.minercorp.gransede.obra.PlanoListener;
 import com.isjbar.minercorp.gransede.npc.VendedorManager;
 import com.isjbar.minercorp.gransede.tienda.TiendaListener;
 import com.isjbar.minercorp.gransede.tienda.TiendaManager;
@@ -26,6 +28,7 @@ public class GranSedePlugin extends JavaPlugin {
     private VendedorManager vendedores;
     private ZonaProteccionListener proteccion;
     private TrabajoListener trabajos;
+    private ObraGranSedeManager obras;
 
     @Override
     public void onEnable() {
@@ -54,6 +57,11 @@ public class GranSedePlugin extends JavaPlugin {
                 () -> getConfig().getStringList("mensaje-bienvenida")), this);
         cargarReglas();
 
+        this.obras = new ObraGranSedeManager(this);
+        getServer().getPluginManager().registerEvents(new PlanoListener(obras), this);
+        obras.start();
+        obras.retomar();
+
         GranSedeCommand cmd = new GranSedeCommand(this);
         getCommand("gransede").setExecutor(cmd);
         getCommand("gransede").setTabCompleter(cmd);
@@ -63,6 +71,7 @@ public class GranSedePlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (obras != null) obras.stop();
         if (trabajos != null) trabajos.restaurarTodo();
         getServer().getServicesManager().unregisterAll(this);
     }
@@ -94,4 +103,5 @@ public class GranSedePlugin extends JavaPlugin {
     public TiendaManager tiendas() { return tiendas; }
     public TiendaMenu menu() { return menu; }
     public VendedorManager vendedores() { return vendedores; }
+    public ObraGranSedeManager obras() { return obras; }
 }

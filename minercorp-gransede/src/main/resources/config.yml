@@ -4,13 +4,36 @@
 #
 # La Gran Sede es el lugar central del servidor: tiendas de vehiculos y
 # taladros, y una mina y un bosque publicos para ganar los primeros fondos.
-# El edificio lo construyen los admins; este plugin pone las reglas.
+# El plugin la puede construir entera (ver abajo) o se arma a mano.
 #
-# Zonas (se guardan en zonas.yml, no aca):
+# La forma facil: /gransede construir te da el Plano de la Gran Sede. Con el
+# en la mano miras al suelo (ves el contorno y donde va cada cosa), clic
+# derecho, confirmas, y el plugin despeja el terreno y la construye entera
+# con animacion: tiendas, edificio central, plaza, mina y bosque. Al
+# terminar crea las zonas, el spawn y los vendedores solo.
+#
+# Zonas a mano (se guardan en zonas.yml, no aca):
 #   /gransede pos1  y  /gransede pos2       -> marcar las dos esquinas
 #   /gransede zona crear <nombre> <SEDE|MINA|BOSQUE>
 #   /gransede zona borrar <nombre>  |  /gransede zona lista
 #   /gransede zona spawn                    -> el punto de /gransede ir
+
+# Obra de la Gran Sede (/gransede construir).
+obra:
+  # Un .nbt hecho con un bloque de estructura vanilla reemplaza a la Gran
+  # Sede que trae el plugin. Marcadores: bloques de estructura en modo DATA
+  # con metadata "spawn", "npc:<tienda>", y dos "mina" y dos "bosque" en las
+  # esquinas opuestas de cada zona.
+  archivo-estructura: estructuras/gransede.nbt
+  # Velocidad. La Gran Sede por defecto tiene unos 10.000 bloques: con 20
+  # por tick tarda medio minuto.
+  bloques-por-tick: 20
+  columnas-despeje-por-tick: 40
+  # Bloques que caen animados a la vez (el resto aparece directo).
+  animaciones-a-la-vez: 16
+  # Cuanto se despeja por encima del edificio mas alto.
+  altura-despeje: 10
+  radio-barra: 96
 
 # Si los jugadores pueden ir a la Gran Sede con /gransede ir.
 tp-permitido: true
@@ -44,6 +67,7 @@ trabajos:
     pago:
       STONE: 0.5
       COBBLESTONE: 0.5
+      ANDESITE: 0.5
       COAL_ORE: 3.0
       COPPER_ORE: 3.0
       IRON_ORE: 5.0
