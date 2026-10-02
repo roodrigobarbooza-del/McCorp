@@ -39,6 +39,19 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
+        <!-- Opcionales (softdepend): solo se usan si estan instalados. -->
+        <dependency>
+            <groupId>com.isjbar</groupId>
+            <artifactId>minercorp-gransede</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.isjbar</groupId>
+            <artifactId>minercorp-resources</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>

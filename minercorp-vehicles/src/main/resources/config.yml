@@ -15,9 +15,15 @@
 # acompanante). Con combustible en la mano lo carga. Shift + click derecho
 # abre la carga.
 
-# Mientras la gran sede no tenga concesionario, /vehiculo tienda abre uno por
-# comando. Ponerlo en false cuando la sede los venda.
+# Con MinerCorp-GranSede instalado, los vehiculos se venden solos en sus
+# tiendas: los taladros en "taladros" y el resto en "concesionaria" (hay que
+# poner los vendedores con /gransede npc crear). /vehiculo tienda abre ademas
+# un concesionario por comando; ponerlo en false para que solo se compren en
+# la gran sede.
 tienda-por-comando: true
+tienda-gran-sede:
+  vehiculos: concesionaria
+  taladros: taladros
 
 # Cada cuantos segundos se guardan garajes y empresas mientras se maneja.
 guardado-segundos: 30
@@ -32,9 +38,9 @@ efectos:
   # Aviso cuando algo frena al vehiculo (pared, agua, fin del territorio).
   sonido-bloqueado: "block.anvil.land"
 
-# Combustibles que se cargan con items en la mano. Otros plugins (por ejemplo
-# el de minerales, con gasolina y diesel) registran los suyos por VehiclesAPI
-# con su propio id; cada tipo de vehiculo dice abajo cuales acepta.
+# Combustibles que se cargan con items en la mano. Otros plugins pueden
+# registrar los suyos por VehiclesAPI con su propio id; cada tipo de vehiculo
+# dice abajo cuales acepta.
 combustibles:
   carbon:
     nombre: "Carbon"
@@ -45,6 +51,13 @@ combustibles:
       COAL_BLOCK: 90
     # Litros por unidad de carbon crudo de la empresa (/vehiculo cargar).
     por-carbon-crudo: 5
+
+# Items de MinerCorp-Recursos que sirven de combustible, si esta instalado:
+# id del recurso -> combustible y litros por item (un bidon son 20 L).
+combustibles-de-recursos:
+  gasolina: {combustible: gasolina, litros: 20}
+  diesel: {combustible: diesel, litros: 20}
+  carbon_crudo: {combustible: carbon, litros: 5}
 
 # Reglas del taladro (para todos los tipos con "clase: taladro").
 taladro:

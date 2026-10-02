@@ -8,6 +8,8 @@ import com.isjbar.minercorp.vehicles.command.VehiculoCommand;
 import com.isjbar.minercorp.vehicles.fuel.FuelRegistry;
 import com.isjbar.minercorp.vehicles.garage.Garage;
 import com.isjbar.minercorp.vehicles.gui.MenuListener;
+import com.isjbar.minercorp.vehicles.integration.GranSedeShop;
+import com.isjbar.minercorp.vehicles.integration.ResourcesFuels;
 import com.isjbar.minercorp.vehicles.type.VehicleTypes;
 import com.isjbar.minercorp.vehicles.vehicle.LegacyMigration;
 import com.isjbar.minercorp.vehicles.vehicle.VehicleListener;
@@ -62,6 +64,7 @@ public class VehiclesPlugin extends JavaPlugin {
         getCommand("vehiculo").setTabCompleter(command);
         getCommand("garaje").setExecutor(command);
 
+        registerIntegrations();
         vehicles.start();
         legacy.migrateStoredDrills();
         for (World world : getServer().getWorlds()) {
@@ -83,6 +86,17 @@ public class VehiclesPlugin extends JavaPlugin {
         this.types = VehicleTypes.load(getConfig(), getLogger());
         fuels.loadConfig(getConfig(), getLogger());
         vehicles.reloadSettings();
+        registerIntegrations();
+    }
+
+    /** Vende los vehiculos en la Gran Sede y toma los combustibles de Recursos, si estan instalados. */
+    private void registerIntegrations() {
+        if (getServer().getPluginManager().isPluginEnabled("MinerCorp-GranSede")) {
+            getLogger().info(GranSedeShop.registrar(this) + " vehiculos a la venta en la Gran Sede.");
+        }
+        if (getServer().getPluginManager().isPluginEnabled("MinerCorp-Recursos")) {
+            getLogger().info(ResourcesFuels.registrar(this) + " combustibles de MinerCorp-Recursos.");
+        }
     }
 
     private <T> T loadService(Class<T> clazz) {

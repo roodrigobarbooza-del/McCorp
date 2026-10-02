@@ -44,7 +44,7 @@ public class MinerCorpMenu {
         inv.setItem(10, item(plugin, Material.BOOK, "Info de " + company.getName(), NamedTextColor.AQUA,
                 List.of(
                         "Nivel " + company.getLevel(),
-                        "Balance: " + round(plugin.economy().getBalance(company.getId())),
+                        "Balance: " + plugin.economy().format(plugin.economy().getBalance(company.getId())),
                         "Carbon crudo: " + round(company.getRawCoal()),
                         "Carbon refinado: " + round(company.getRefinedCoal()),
                         "Territorios: " + plugin.territory().countClaims(company.getId()) + " / " + plugin.levels().chunksPermitidos(company.getLevel()),
@@ -61,12 +61,8 @@ public class MinerCorpMenu {
         inv.setItem(14, item(plugin, Material.VILLAGER_SPAWN_EGG, "Colocar minion", NamedTextColor.LIGHT_PURPLE,
                 List.of("Extrae carbon solo con el tiempo", "Debe estar dentro de tu territorio"), MenuActions.MINION_COLOCAR));
 
-        double ratioBase = plugin.getConfig().getDouble("refineria.ratio", 2);
-        double bonusPorNivel = plugin.getConfig().getDouble("refineria.bonus-por-nivel", 0.03);
-        double ratio = Math.max(1.0, ratioBase - bonusPorNivel * (company.getLevel() - 1));
-        double maxRefinable = company.getRawCoal() / ratio;
-        inv.setItem(15, item(plugin, Material.FURNACE, "Refinar todo", NamedTextColor.GOLD,
-                List.of("Convierte " + round(company.getRawCoal()) + " crudo", "en hasta " + round(maxRefinable) + " refinado"), MenuActions.REFINAR_TODO));
+        inv.setItem(15, item(plugin, Material.HOPPER, "Sacar carbon crudo", NamedTextColor.GOLD,
+                List.of(round(company.getRawCoal()) + " en la empresa", "Saca 64 para llevar al Horno de coque"), MenuActions.SACAR_CARBON));
 
         double precioCrudo = plugin.getConfig().getDouble("economia.precio-carbon-crudo", 2.0);
         inv.setItem(16, item(plugin, Material.COAL, "Vender todo el crudo", NamedTextColor.YELLOW,

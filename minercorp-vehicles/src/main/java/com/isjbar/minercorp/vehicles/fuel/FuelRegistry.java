@@ -53,8 +53,17 @@ public final class FuelRegistry {
     }
 
     public void register(String id, String nombre, Predicate<ItemStack> matcher, double litrosPorItem) {
+        register(id, id, nombre, matcher, litrosPorItem);
+    }
+
+    /**
+     * Igual, pero con una clave propia: asi varios items distintos pueden ser
+     * el mismo combustible (por ejemplo el carbon del config y el carbon crudo
+     * de MinerCorp-Recursos), y registrar otra vez la misma clave la reemplaza.
+     */
+    public void register(String key, String id, String nombre, Predicate<ItemStack> matcher, double litrosPorItem) {
         String fid = id.toLowerCase(Locale.ROOT);
-        fromApi.put(fid, new Fuel(fid, nombre, matcher, litrosPorItem));
+        fromApi.put(key.toLowerCase(Locale.ROOT), new Fuel(fid, nombre, matcher, litrosPorItem));
     }
 
     /** El combustible que es este item, entre los que acepta el vehiculo. */
@@ -82,9 +91,8 @@ public final class FuelRegistry {
         StringBuilder sb = new StringBuilder();
         for (String id : ids) {
             String nombre = null;
-            Fuel api = fromApi.get(id);
-            if (api != null) nombre = api.nombre();
-            else for (Fuel f : fromConfig.values()) if (f.id().equals(id)) { nombre = f.nombre(); break; }
+            for (Fuel f : fromApi.values()) if (f.id().equals(id)) { nombre = f.nombre(); break; }
+            if (nombre == null) for (Fuel f : fromConfig.values()) if (f.id().equals(id)) { nombre = f.nombre(); break; }
             if (nombre == null) continue;
             if (!sb.isEmpty()) sb.append(", ");
             sb.append(nombre);

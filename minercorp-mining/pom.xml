@@ -14,7 +14,7 @@
     <packaging>jar</packaging>
 
     <name>MinerCorp-Mining</name>
-    <description>Nucleo del trabajo de mineria: empresas, minions, refineria y venta de carbon. Consume MinerCorp-Territory y MinerCorp-Economy via ServicesManager.</description>
+    <description>Nucleo del trabajo de mineria: empresas, minions, venta de carbon (el refinado esta en MinerCorp-Recursos). Consume MinerCorp-Territory y MinerCorp-Economy via ServicesManager.</description>
 
     <dependencies>
         <dependency>
@@ -30,6 +30,12 @@
         <dependency>
             <groupId>com.isjbar</groupId>
             <artifactId>minercorp-economy</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.isjbar</groupId>
+            <artifactId>minercorp-resources</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>

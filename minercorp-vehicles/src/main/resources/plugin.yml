@@ -5,6 +5,7 @@ api-version: '26.3'
 author: isjbar
 description: Vehiculos de MinerCorp - taladros, camiones y camionetas con garaje, combustible y carga. Requiere MinerCorp-Territory, MinerCorp-Economy y MinerCorp-Mining.
 depend: [MinerCorp-Territory, MinerCorp-Economy, MinerCorp-Mining]
+softdepend: [MinerCorp-GranSede, MinerCorp-Recursos]
 
 commands:
   vehiculo:

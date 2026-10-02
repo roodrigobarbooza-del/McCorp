@@ -1,8 +1,10 @@
 package com.isjbar.minercorp.mining.gui;
 
+import com.isjbar.minercorp.economy.api.Reason;
 import com.isjbar.minercorp.mining.MiningPlugin;
 import com.isjbar.minercorp.mining.company.Company;
 import com.isjbar.minercorp.mining.company.CompanyManager;
+import com.isjbar.minercorp.mining.company.RawCoalItems;
 import com.isjbar.minercorp.mining.minion.MinionManager;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
@@ -97,8 +99,8 @@ public class MenuListener implements Listener {
             MinerCorpMenu.open(plugin, player);
             return;
         }
-        if (action.equals(MenuActions.REFINAR_TODO)) {
-            refinarTodo(player, company);
+        if (action.equals(MenuActions.SACAR_CARBON)) {
+            RawCoalItems.sacar(plugin, player, company, 64);
             MinerCorpMenu.open(plugin, player);
             return;
         }
@@ -128,7 +130,7 @@ public class MenuListener implements Listener {
             return;
         }
         double costo = plugin.getConfig().getDouble("economia.costo-fundar-empresa", 50.0);
-        if (!plugin.economy().withdraw(player.getUniqueId(), costo)) {
+        if (!plugin.economy().withdraw(player.getUniqueId(), costo, Reason.of(Reason.COMPRA, "Fundar la empresa " + nombre)).success()) {
             msg(player, NamedTextColor.RED, "Te faltan fondos. Fundar una empresa cuesta " + costo + ".");
             return;
         }
@@ -149,7 +151,7 @@ public class MenuListener implements Listener {
         CompanyManager.ClaimOutcome result = plugin.companies().claim(company, chunk);
         switch (result) {
             case OK -> {
-                plugin.economy().withdraw(company.getId(), costo);
+                plugin.economy().withdraw(company.getId(), costo, Reason.of(Reason.COMPRA, "Territorio en " + chunk.getX() + ", " + chunk.getZ()));
                 msg(player, NamedTextColor.GREEN, "Territorio reclamado para " + company.getName() + ".");
                 if (plugin.obras().darPlanoSiCorresponde(player, company)) {
                     msg(player, NamedTextColor.GOLD, "Recibiste el Plano de obra: sostenlo y haz clic derecho donde quieras levantar la sede.");
@@ -175,23 +177,6 @@ public class MenuListener implements Listener {
         }
     }
 
-    private void refinarTodo(Player player, Company company) {
-        double ratioBase = plugin.getConfig().getDouble("refineria.ratio", 2);
-        double bonusPorNivel = plugin.getConfig().getDouble("refineria.bonus-por-nivel", 0.03);
-        double ratio = Math.max(1.0, ratioBase - bonusPorNivel * (company.getLevel() - 1));
-        double cantidad = company.getRawCoal() / ratio;
-
-        if (cantidad <= 0) {
-            msg(player, NamedTextColor.RED, "No tenes carbon crudo para refinar.");
-            return;
-        }
-        double crudoNecesario = cantidad * ratio;
-        company.removeRawCoal(crudoNecesario);
-        company.addRefinedCoal(cantidad);
-        plugin.companies().save();
-        msg(player, NamedTextColor.GREEN, "Refinaste " + round(cantidad) + " de carbon.");
-    }
-
     private void venderTodo(Player player, Company company, boolean refinado) {
         double cantidad = refinado ? company.getRefinedCoal() : company.getRawCoal();
         if (cantidad <= 0) {
@@ -203,7 +188,8 @@ public class MenuListener implements Listener {
 
         double precio = plugin.getConfig().getDouble(refinado ? "economia.precio-carbon-refinado" : "economia.precio-carbon-crudo", 2.0);
         double total = cantidad * precio;
-        plugin.economy().deposit(company.getId(), total);
+        plugin.economy().deposit(company.getId(), total,
+                Reason.of(Reason.VENTA, round(cantidad) + " de carbon " + (refinado ? "refinado" : "crudo")));
         plugin.companies().save();
         msg(player, NamedTextColor.GREEN, "Vendiste " + round(cantidad) + " de carbon " + (refinado ? "refinado" : "crudo") + " por " + round(total) + ".");
     }

@@ -3,17 +3,16 @@ version: '${project.version}'
 main: com.isjbar.minercorp.mining.MiningPlugin
 api-version: '26.3'
 author: isjbar
-description: Nucleo del trabajo de mineria - empresas, minions, refineria y venta de carbon. Requiere MinerCorp-Territory y MinerCorp-Economy.
+description: Nucleo del trabajo de mineria - empresas, minions y venta de carbon. Requiere MinerCorp-Territory y MinerCorp-Economy.
 depend: [MinerCorp-Territory, MinerCorp-Economy]
+# Recursos es opcional: con el se saca el carbon crudo como items para el Horno de coque.
+softdepend: [MinerCorp-Recursos]
 
 commands:
   empresa:
     description: Comando principal de MinerCorp
     usage: /empresa <subcomando>
     aliases: [mc, empresamina]
-  saldo:
-    description: Consulta tu saldo personal
-    usage: /saldo
 
 permissions:
   minercorp.use:

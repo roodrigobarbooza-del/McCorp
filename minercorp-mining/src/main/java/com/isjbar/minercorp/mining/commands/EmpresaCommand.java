@@ -1,9 +1,11 @@
 package com.isjbar.minercorp.mining.commands;
 
+import com.isjbar.minercorp.economy.api.Reason;
 import com.isjbar.minercorp.mining.MiningPlugin;
 import com.isjbar.minercorp.mining.company.Company;
 import com.isjbar.minercorp.mining.company.CompanyManager;
 import com.isjbar.minercorp.mining.company.MinionData;
+import com.isjbar.minercorp.mining.company.RawCoalItems;
 import com.isjbar.minercorp.mining.gui.MinerCorpMenu;
 import com.isjbar.minercorp.mining.minion.MinionManager;
 import com.isjbar.minercorp.mining.sede.Obra;
@@ -32,7 +34,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBCOMANDOS = List.of(
             "crear", "info", "reclamar", "liberar", "invitar", "aceptar", "rechazar",
-            "expulsar", "salir", "disolver", "taladro", "minion", "refinar", "vender",
+            "expulsar", "salir", "disolver", "taladro", "minion", "carbon", "vender",
             "depositar", "retirar", "obra", "menu", "ayuda"
     );
 
@@ -68,7 +70,8 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
             case "disolver" -> disolver(player);
             case "taladro" -> taladro(player);
             case "minion" -> minion(player, rest);
-            case "refinar" -> refinar(player, rest);
+            case "refinar" -> RawCoalItems.avisarRefinado(player);
+            case "carbon" -> carbon(player, rest);
             case "vender" -> vender(player, rest);
             case "depositar" -> depositar(player, rest);
             case "retirar" -> retirar(player, rest);
@@ -100,7 +103,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         }
 
         double costo = plugin.getConfig().getDouble("economia.costo-fundar-empresa", 50.0);
-        if (!plugin.economy().withdraw(player.getUniqueId(), costo)) {
+        if (!plugin.economy().withdraw(player.getUniqueId(), costo, Reason.of(Reason.COMPRA, "Fundar la empresa " + nombre)).success()) {
             msg(player, NamedTextColor.RED, "Te faltan fondos. Fundar una empresa cuesta " + costo + ".");
             return;
         }
@@ -130,7 +133,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(linea("Colaboradores", c.getCollaborators().isEmpty() ? "ninguno" :
                 c.getCollaborators().stream().map(this::nombreDe).collect(Collectors.joining(", "))));
         player.sendMessage(linea("Nivel", c.getLevel() + (xpRequerida < 0 ? " (maximo)" : " (xp " + round(c.getXp()) + "/" + round(xpRequerida) + ")")));
-        player.sendMessage(linea("Balance", round(plugin.economy().getBalance(c.getId())) + ""));
+        player.sendMessage(linea("Balance", plugin.economy().format(plugin.economy().getBalance(c.getId()))));
         player.sendMessage(linea("Carbon crudo", round(c.getRawCoal()) + ""));
         player.sendMessage(linea("Carbon refinado", round(c.getRefinedCoal()) + ""));
         player.sendMessage(linea("Territorios", claims.size() + " / " + plugin.levels().chunksPermitidos(c.getLevel())));
@@ -159,7 +162,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         CompanyManager.ClaimOutcome result = plugin.companies().claim(company, chunk);
         switch (result) {
             case OK -> {
-                plugin.economy().withdraw(company.getId(), costo);
+                plugin.economy().withdraw(company.getId(), costo, Reason.of(Reason.COMPRA, "Territorio en " + chunk.getX() + ", " + chunk.getZ()));
                 VeinSnapshot vein = plugin.territory().getVein(chunk).orElseThrow();
                 msg(player, NamedTextColor.GREEN, "Territorio reclamado para " + company.getName()
                         + ". Se detectaron " + vein.bloquesDetectados() + " bloques de carbon (reserva: " + round(vein.reservaMaxima()) + ").");
@@ -356,27 +359,20 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    private void refinar(Player player, String[] args) {
+    /** Saca carbon crudo de la empresa como items, para llevarlo a un Horno de coque. */
+    private void carbon(Player player, String[] args) {
         Company company = requireCompany(player);
         if (company == null) return;
         if (!requireOwnerOrCollab(player, company)) return;
-
-        double cantidad = parseCantidad(player, args);
-        if (cantidad <= 0) return;
-
-        double ratioBase = plugin.getConfig().getDouble("refineria.ratio", 2);
-        double bonusPorNivel = plugin.getConfig().getDouble("refineria.bonus-por-nivel", 0.03);
-        double ratio = Math.max(1.0, ratioBase - bonusPorNivel * (company.getLevel() - 1));
-        double crudoNecesario = cantidad * ratio;
-
-        if (!company.removeRawCoal(crudoNecesario)) {
-            msg(player, NamedTextColor.RED, "No hay suficiente carbon crudo. Necesitas " + round(crudoNecesario)
-                    + " para refinar " + round(cantidad) + ".");
-            return;
+        int cantidad;
+        if (args.length > 0 && args[0].equalsIgnoreCase("todo")) {
+            cantidad = Integer.MAX_VALUE;
+        } else {
+            double pedido = parseCantidad(player, args);
+            if (pedido <= 0) return;
+            cantidad = (int) Math.floor(pedido);
         }
-        company.addRefinedCoal(cantidad);
-        plugin.companies().save();
-        msg(player, NamedTextColor.GREEN, "Refinaste " + round(cantidad) + " de carbon usando " + round(crudoNecesario) + " crudo.");
+        RawCoalItems.sacar(plugin, player, company, cantidad);
     }
 
     private void vender(Player player, String[] args) {
@@ -404,10 +400,11 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         }
         double precio = plugin.getConfig().getDouble(refinado ? "economia.precio-carbon-refinado" : "economia.precio-carbon-crudo", 2.0);
         double total = cantidad * precio;
-        plugin.economy().deposit(company.getId(), total);
+        plugin.economy().deposit(company.getId(), total,
+                Reason.of(Reason.VENTA, round(cantidad) + " de carbon " + (refinado ? "refinado" : "crudo")));
         plugin.companies().save();
         msg(player, NamedTextColor.GREEN, "Vendiste " + round(cantidad) + " de carbon " + (refinado ? "refinado" : "crudo")
-                + " por " + round(total) + ".");
+                + " por " + plugin.economy().format(total) + ".");
     }
 
     private void depositar(Player player, String[] args) {
@@ -415,12 +412,12 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         if (company == null) return;
         double cantidad = parseCantidad(player, args);
         if (cantidad <= 0) return;
-        if (!plugin.economy().withdraw(player.getUniqueId(), cantidad)) {
+        if (!plugin.economy().transfer(player.getUniqueId(), company.getId(), cantidad,
+                Reason.of(Reason.PAGO, player.getName() + " deposito en " + company.getName())).success()) {
             msg(player, NamedTextColor.RED, "No tienes suficiente saldo personal.");
             return;
         }
-        plugin.economy().deposit(company.getId(), cantidad);
-        msg(player, NamedTextColor.GREEN, "Depositaste " + round(cantidad) + " en la empresa.");
+        msg(player, NamedTextColor.GREEN, "Depositaste " + plugin.economy().format(cantidad) + " en la empresa.");
     }
 
     private void retirar(Player player, String[] args) {
@@ -429,12 +426,12 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         if (!requireOwner(player, company)) return;
         double cantidad = parseCantidad(player, args);
         if (cantidad <= 0) return;
-        if (!plugin.economy().withdraw(company.getId(), cantidad)) {
+        if (!plugin.economy().transfer(company.getId(), player.getUniqueId(), cantidad,
+                Reason.of(Reason.PAGO, player.getName() + " retiro de " + company.getName())).success()) {
             msg(player, NamedTextColor.RED, "La empresa no tiene suficiente balance.");
             return;
         }
-        plugin.economy().deposit(player.getUniqueId(), cantidad);
-        msg(player, NamedTextColor.GREEN, "Retiraste " + round(cantidad) + " de la empresa a tu saldo personal.");
+        msg(player, NamedTextColor.GREEN, "Retiraste " + plugin.economy().format(cantidad) + " de la empresa a tu saldo personal.");
     }
 
     private void obra(Player player, String[] args) {
@@ -510,7 +507,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
                 "/empresa obra [plano|cancelar] - estado de la obra de la sede, pedir el plano o cancelarla",
                 "/garaje y /vehiculo - taladros y demas vehiculos (MinerCorp-Vehicles)",
                 "/empresa minion <colocar|quitar|lista> - gestiona tus minions",
-                "/empresa refinar <cantidad> - convierte carbon crudo en refinado",
+                "/empresa carbon <cantidad|todo> - saca carbon crudo de la empresa para el Horno de coque",
                 "/empresa vender <crudo|refinado> <cantidad> - vende produccion",
                 "/empresa depositar|retirar <monto> - mueve dinero entre tu saldo y la empresa",
                 "/empresa menu - abre el menu con botones para las acciones mas comunes"

@@ -2,13 +2,13 @@ package com.isjbar.minercorp.mining;
 
 import com.isjbar.minercorp.economy.api.EconomyAPI;
 import com.isjbar.minercorp.mining.commands.EmpresaCommand;
-import com.isjbar.minercorp.mining.commands.SaldoCommand;
 import com.isjbar.minercorp.mining.company.CompanyManager;
 import com.isjbar.minercorp.mining.company.LevelConfig;
 import com.isjbar.minercorp.mining.gui.MenuListener;
 import com.isjbar.minercorp.mining.minion.MinionManager;
 import com.isjbar.minercorp.mining.sede.ObraListener;
 import com.isjbar.minercorp.mining.sede.ObraManager;
+import com.isjbar.minercorp.resources.api.ResourcesAPI;
 import com.isjbar.minercorp.territory.api.TerritoryAPI;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -47,9 +47,6 @@ public class MiningPlugin extends JavaPlugin {
         EmpresaCommand empresaCommand = new EmpresaCommand(this);
         getCommand("empresa").setExecutor(empresaCommand);
         getCommand("empresa").setTabCompleter(empresaCommand);
-        SaldoCommand saldoCommand = new SaldoCommand(this);
-        getCommand("saldo").setExecutor(saldoCommand);
-        getCommand("saldo").setTabCompleter(saldoCommand);
 
         minionManager.start();
         obraManager.start();
@@ -109,5 +106,14 @@ public class MiningPlugin extends JavaPlugin {
 
     public ObraManager obras() {
         return obraManager;
+    }
+
+    /**
+     * Items de recursos (carbon crudo, etc) de MinerCorp-Recursos, o null si
+     * ese plugin no esta instalado. Se busca cada vez porque es opcional.
+     */
+    public ResourcesAPI recursos() {
+        if (getServer().getPluginManager().getPlugin("MinerCorp-Recursos") == null) return null;
+        return loadService(ResourcesAPI.class);
     }
 }

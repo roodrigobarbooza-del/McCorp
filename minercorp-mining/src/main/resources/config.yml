@@ -29,11 +29,8 @@ minions:
   intervalo-ticks: 200
   produccion-por-ciclo: 2
 
-refineria:
-  # Cuanto carbon crudo se necesita para 1 de refinado
-  ratio: 2
-  # Bonus de rendimiento al refinar por nivel de empresa (reduce el ratio efectivo)
-  bonus-por-nivel: 0.03
+# El refinado ya no es por comando: /empresa carbon saca el carbon crudo de la
+# empresa como items y se refina en el Horno de coque de MinerCorp-Recursos.
 
 # Obra de la sede: despues del primer reclamo, la empresa recibe un Plano de
 # obra para elegir donde levantar su sede. Hay que limpiar la parcela y dejar
