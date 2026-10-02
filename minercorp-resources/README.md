@@ -1,0 +1,60 @@
+# MinerCorp-Recursos
+
+Recursos que no existen en Minecraft (petroleo y sus derivados, coque) y las
+maquinas para extraerlos y transformarlos. **El refinado ya no es por
+comando:** todo pasa por una maquina colocada en el territorio de tu empresa,
+que hay que cargar con materia prima y combustible.
+
+Requiere MinerCorp-Territory y MinerCorp-Economy. Diseño completo y fases
+siguientes (plataforma marina, gas, electricidad, bauxita, litio) en el plan
+del proyecto (`plan/minerales.md`).
+
+## Cadena de produccion
+
+```
+veta de carbon ──[Perforadora de carbon]──> carbon crudo ──[Horno de coque]──> coque + alquitran
+yacimiento     ──[Bomba de petroleo]─────> petroleo crudo ─[Refineria]──────> gasolina, diesel, asfalto, azufre
+```
+
+Combustible: cada maquina acepta los de su lista en `config.yml`
+(carbon vanilla, carbon crudo, coque, diesel). El coque y el diesel duran mucho
+mas que el carbon.
+
+| Maquina | Bloque | Entrada | Salida |
+|---|---|---|---|
+| Perforadora de carbon | lodestone + torre amarilla | veta del chunk | carbon crudo |
+| Bomba de petroleo | blackstone + balancin que sube y baja | yacimiento del chunk | petroleo crudo |
+| Horno de coque | ladrillos + domo con chimenea | 2 carbon crudo | coque (+ alquitran 25%) |
+| Refineria | hierro + columna de destilacion | 1 petroleo crudo | gasolina (+ diesel 60%, asfalto 30%, azufre 10%) |
+
+## Como se usa
+
+1. Un admin da la maquina: `/recursos dar <jugador> refineria` (mas adelante se
+   compra en la Gran Sede).
+2. Colocala en un chunk de tu empresa. El modelo se arma solo arriba del bloque.
+3. Click derecho: panel con entrada, combustible y salidas. Shift + click
+   desde tu inventario manda cada cosa a su lugar. Shift + click derecho a la
+   maquina con algo en la mano lo carga sin abrir el panel.
+4. Mientras trabaja se mueve (el balancin, la barra) y echa humo/llama; el
+   cartel de arriba dice si le falta algo.
+5. Romperla devuelve la maquina y lo que tenia adentro.
+
+El carbon crudo que juntan los taladros y minions sigue en la empresa: se saca
+como items con `/empresa carbon <cantidad|todo>` (o "Sacar carbon crudo" en el
+menu) para llevarlo al horno.
+
+## Comandos (`/recursos`, alias `/rec`)
+
+```
+/recursos sondear                    carbon y petroleo que hay en el chunk donde estas
+/recursos vender [todo]              vende lo que tenes en la mano (o todo); en tu territorio va a la empresa
+/recursos lista                      recursos, precios y maquinas
+/recursos dar <jugador> <id> [n]     (admin) un recurso o una maquina
+/recursos recargar                   (admin) relee config.yml
+```
+
+## Para otros plugins
+
+`ResourcesAPI` por el ServicesManager: crear e identificar items de recursos
+(`createItem("gasolina", 4)`, `identify(item)`), precios, y el item de cada
+maquina para venderlo en una tienda.

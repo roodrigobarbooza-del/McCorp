@@ -3,6 +3,7 @@ package com.isjbar.minercorp.mining.gui;
 import com.isjbar.minercorp.mining.MiningPlugin;
 import com.isjbar.minercorp.mining.company.Company;
 import com.isjbar.minercorp.mining.company.CompanyManager;
+import com.isjbar.minercorp.mining.company.RawCoalItems;
 import com.isjbar.minercorp.mining.minion.MinionManager;
 import com.isjbar.minercorp.mining.vehicle.DrillVehicleManager;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -96,8 +97,8 @@ public class MenuListener implements Listener {
             MinerCorpMenu.open(plugin, player);
             return;
         }
-        if (action.equals(MenuActions.REFINAR_TODO)) {
-            refinarTodo(player, company);
+        if (action.equals(MenuActions.SACAR_CARBON)) {
+            RawCoalItems.sacar(plugin, player, company, 64);
             MinerCorpMenu.open(plugin, player);
             return;
         }
@@ -183,23 +184,6 @@ public class MenuListener implements Listener {
             case LIMITE_NIVEL -> msg(player, NamedTextColor.RED, "Alcanzaste el limite de minions para tu nivel.");
             case SIN_SALDO -> msg(player, NamedTextColor.RED, "La empresa no tiene saldo suficiente para otro minion.");
         }
-    }
-
-    private void refinarTodo(Player player, Company company) {
-        double ratioBase = plugin.getConfig().getDouble("refineria.ratio", 2);
-        double bonusPorNivel = plugin.getConfig().getDouble("refineria.bonus-por-nivel", 0.03);
-        double ratio = Math.max(1.0, ratioBase - bonusPorNivel * (company.getLevel() - 1));
-        double cantidad = company.getRawCoal() / ratio;
-
-        if (cantidad <= 0) {
-            msg(player, NamedTextColor.RED, "No tenes carbon crudo para refinar.");
-            return;
-        }
-        double crudoNecesario = cantidad * ratio;
-        company.removeRawCoal(crudoNecesario);
-        company.addRefinedCoal(cantidad);
-        plugin.companies().save();
-        msg(player, NamedTextColor.GREEN, "Refinaste " + round(cantidad) + " de carbon.");
     }
 
     private void venderTodo(Player player, Company company, boolean refinado) {

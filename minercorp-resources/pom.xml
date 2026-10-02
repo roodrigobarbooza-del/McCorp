@@ -10,11 +10,11 @@
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>minercorp-mining</artifactId>
+    <artifactId>minercorp-resources</artifactId>
     <packaging>jar</packaging>
 
-    <name>MinerCorp-Mining</name>
-    <description>Nucleo del trabajo de mineria: empresas, taladros-vehiculo, minions, venta de carbon (el refinado esta en MinerCorp-Recursos). Consume MinerCorp-Territory y MinerCorp-Economy via ServicesManager.</description>
+    <name>MinerCorp-Recursos</name>
+    <description>Recursos (carbon, petroleo y derivados) y las maquinas para extraerlos y refinarlos. Consume MinerCorp-Territory y MinerCorp-Economy via ServicesManager y expone ResourcesAPI.</description>
 
     <dependencies>
         <dependency>
@@ -30,12 +30,6 @@
         <dependency>
             <groupId>com.isjbar</groupId>
             <artifactId>minercorp-economy</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.isjbar</groupId>
-            <artifactId>minercorp-resources</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>

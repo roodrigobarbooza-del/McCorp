@@ -14,6 +14,9 @@ estilo Vault (via el `ServicesManager` de Bukkit):
 - **MinerCorp-Mining**: el trabajo de mineria en si - empresas, taladros
   vehiculo, minions, refineria y venta de carbon. Es el unico que sabe que
   existe "carbon".
+- **MinerCorp-Recursos**: petroleo y otros recursos industriales, y las
+  maquinas que los extraen y refinan (perforadora, bomba de petroleo, horno de
+  coque, refineria). Ver [minercorp-resources/README.md](minercorp-resources/README.md).
 
 ## Requisitos
 
@@ -123,7 +126,7 @@ andaba lentisimo y todos los tiers iban igual.
 /empresa taladro sacar [numero]        (saca un taladro del garaje, parado en tu territorio)
 /empresa taladro quitar                (desarma el taladro mas cercano)
 /empresa minion <colocar|quitar|lista>
-/empresa refinar <cantidad>
+/empresa carbon <cantidad|todo>        (saca carbon crudo como items para el Horno de coque)
 /empresa vender <crudo|refinado> <cantidad>
 /empresa depositar|retirar <monto>
 /empresa menu                          (abre el HUD de cofre con botones para lo de arriba)

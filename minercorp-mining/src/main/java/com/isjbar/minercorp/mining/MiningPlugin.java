@@ -11,6 +11,7 @@ import com.isjbar.minercorp.mining.sede.ObraListener;
 import com.isjbar.minercorp.mining.sede.ObraManager;
 import com.isjbar.minercorp.mining.vehicle.DrillVehicleListener;
 import com.isjbar.minercorp.mining.vehicle.DrillVehicleManager;
+import com.isjbar.minercorp.resources.api.ResourcesAPI;
 import com.isjbar.minercorp.territory.api.TerritoryAPI;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -122,5 +123,14 @@ public class MiningPlugin extends JavaPlugin {
 
     public DrillVehicleManager vehicles() {
         return vehicleManager;
+    }
+
+    /**
+     * Items de recursos (carbon crudo, etc) de MinerCorp-Recursos, o null si
+     * ese plugin no esta instalado. Se busca cada vez porque es opcional.
+     */
+    public ResourcesAPI recursos() {
+        if (getServer().getPluginManager().getPlugin("MinerCorp-Recursos") == null) return null;
+        return loadService(ResourcesAPI.class);
     }
 }

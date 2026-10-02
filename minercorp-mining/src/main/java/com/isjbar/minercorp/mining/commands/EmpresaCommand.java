@@ -4,6 +4,7 @@ import com.isjbar.minercorp.mining.MiningPlugin;
 import com.isjbar.minercorp.mining.company.Company;
 import com.isjbar.minercorp.mining.company.CompanyManager;
 import com.isjbar.minercorp.mining.company.MinionData;
+import com.isjbar.minercorp.mining.company.RawCoalItems;
 import com.isjbar.minercorp.mining.company.StoredDrill;
 import com.isjbar.minercorp.mining.gui.MinerCorpMenu;
 import com.isjbar.minercorp.mining.minion.MinionManager;
@@ -36,7 +37,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
 
     private static final List<String> SUBCOMANDOS = List.of(
             "crear", "info", "reclamar", "liberar", "invitar", "aceptar", "rechazar",
-            "expulsar", "salir", "disolver", "taladro", "minion", "refinar", "vender",
+            "expulsar", "salir", "disolver", "taladro", "minion", "carbon", "vender",
             "depositar", "retirar", "obra", "menu", "ayuda"
     );
 
@@ -72,7 +73,8 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
             case "disolver" -> disolver(player);
             case "taladro" -> taladro(player, rest);
             case "minion" -> minion(player, rest);
-            case "refinar" -> refinar(player, rest);
+            case "refinar" -> RawCoalItems.avisarRefinado(player);
+            case "carbon" -> carbon(player, rest);
             case "vender" -> vender(player, rest);
             case "depositar" -> depositar(player, rest);
             case "retirar" -> retirar(player, rest);
@@ -476,27 +478,20 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    private void refinar(Player player, String[] args) {
+    /** Saca carbon crudo de la empresa como items, para llevarlo a un Horno de coque. */
+    private void carbon(Player player, String[] args) {
         Company company = requireCompany(player);
         if (company == null) return;
         if (!requireOwnerOrCollab(player, company)) return;
-
-        double cantidad = parseCantidad(player, args);
-        if (cantidad <= 0) return;
-
-        double ratioBase = plugin.getConfig().getDouble("refineria.ratio", 2);
-        double bonusPorNivel = plugin.getConfig().getDouble("refineria.bonus-por-nivel", 0.03);
-        double ratio = Math.max(1.0, ratioBase - bonusPorNivel * (company.getLevel() - 1));
-        double crudoNecesario = cantidad * ratio;
-
-        if (!company.removeRawCoal(crudoNecesario)) {
-            msg(player, NamedTextColor.RED, "No hay suficiente carbon crudo. Necesitas " + round(crudoNecesario)
-                    + " para refinar " + round(cantidad) + ".");
-            return;
+        int cantidad;
+        if (args.length > 0 && args[0].equalsIgnoreCase("todo")) {
+            cantidad = Integer.MAX_VALUE;
+        } else {
+            double pedido = parseCantidad(player, args);
+            if (pedido <= 0) return;
+            cantidad = (int) Math.floor(pedido);
         }
-        company.addRefinedCoal(cantidad);
-        plugin.companies().save();
-        msg(player, NamedTextColor.GREEN, "Refinaste " + round(cantidad) + " de carbon usando " + round(crudoNecesario) + " crudo.");
+        RawCoalItems.sacar(plugin, player, company, cantidad);
     }
 
     private void vender(Player player, String[] args) {
@@ -632,7 +627,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
                 "/empresa taladro cargar [cantidad] - carga combustible con carbon crudo de la empresa",
                 "/empresa taladro guardar|sacar [numero] - guarda el taladro cercano en el garaje o lo vuelve a sacar",
                 "/empresa minion <colocar|quitar|lista> - gestiona tus minions",
-                "/empresa refinar <cantidad> - convierte carbon crudo en refinado",
+                "/empresa carbon <cantidad|todo> - saca carbon crudo de la empresa para el Horno de coque",
                 "/empresa vender <crudo|refinado> <cantidad> - vende produccion",
                 "/empresa depositar|retirar <monto> - mueve dinero entre tu saldo y la empresa",
                 "/empresa menu - abre el menu con botones para las acciones mas comunes"
