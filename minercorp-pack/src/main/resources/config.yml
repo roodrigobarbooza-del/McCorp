@@ -1,0 +1,36 @@
+# ============================================
+#  MinerCorp-Pack - configuracion
+# ============================================
+#
+# El resource pack de McCorp le da modelo e imagen propios a vehiculos,
+# maquinas e items (bidon de gasolina, coque...). Este plugin se lo manda a
+# cada jugador cuando entra.
+#
+# modo:
+#   propio  -> (recomendado) el plugin trae el pack adentro y lo sirve con un
+#              mini servidor web en "puerto". No hay que subir nada a ningun
+#              lado. Si juegan desde afuera de tu casa, abri ese puerto en el
+#              router igual que el 25565 (TCP).
+#   url     -> los jugadores lo bajan de "url.direccion" (un link directo al
+#              .zip, por ejemplo de un release de GitHub). Si "url.sha1" esta
+#              vacio, el plugin baja el zip una vez al arrancar y lo calcula.
+#   apagado -> no se manda pack y los items se ven como items vanilla.
+modo: propio
+
+# true: quien rechaza el pack no puede entrar (asi nadie ve cubos violetas).
+obligatorio: true
+mensaje: "McCorp usa texturas propias para vehiculos, maquinas e items."
+
+propio:
+  puerto: 8164
+  # Vacio = se usa la misma direccion con la que el jugador entro al server
+  # (localhost, IP de la red de casa o tu dominio), que suele ser lo correcto.
+  # Ponela solo si eso falla, por ejemplo "mi-server.duckdns.org".
+  direccion-publica: ""
+  # Vacio = el pack que viene adentro del jar. Si queres probar texturas sin
+  # recompilar, pone aca el nombre de un .zip dentro de plugins/MinerCorp-Pack/.
+  archivo: ""
+
+url:
+  direccion: ""
+  sha1: ""

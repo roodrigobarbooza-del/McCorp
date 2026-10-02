@@ -54,6 +54,7 @@ public class ResourceRegistry {
                     id.toLowerCase(Locale.ROOT),
                     sec.getString("nombre", id),
                     material,
+                    sec.getString("modelo"),
                     color == null ? NamedTextColor.WHITE : color,
                     sec.getDouble("precio", 0),
                     sec.getStringList("descripcion")));
@@ -89,6 +90,7 @@ public class ResourceRegistry {
         meta.lore(lore);
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, type.id());
         item.setItemMeta(meta);
+        if (type.model() != null) PackModels.apply(item, type.model());
         return item;
     }
 
