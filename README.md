@@ -144,7 +144,9 @@ api.registrarProducto(new Producto("camion", "concesionaria", "Camion",
 ```
 
 Se cobra de la billetera personal; si `entregar` devuelve false, se devuelve
-el dinero.
+el dinero. Un producto creado con `cobraPropio = true` lo cobra el plugin que
+lo registro (por ejemplo de la cuenta de la empresa) y la Gran Sede solo
+muestra el precio.
 
 ## Comandos (`/empresa`, alias `/mc`)
 

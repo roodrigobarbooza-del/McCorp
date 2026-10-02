@@ -26,7 +26,7 @@ public class GranSedeService implements GranSedeAPI {
         Objects.requireNonNull(producto.tienda(), "tienda");
         Objects.requireNonNull(producto.entregar(), "entregar");
         Producto limpio = producto.lore() == null
-                ? new Producto(producto.id(), producto.tienda(), producto.nombre(), producto.icono(), List.of(), producto.precio(), producto.entregar())
+                ? new Producto(producto.id(), producto.tienda(), producto.nombre(), producto.icono(), List.of(), producto.precio(), producto.entregar(), producto.cobraPropio())
                 : producto;
         tiendas.registrar(limpio);
     }

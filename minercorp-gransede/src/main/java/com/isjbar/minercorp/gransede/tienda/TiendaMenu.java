@@ -82,7 +82,8 @@ public class TiendaMenu {
         List<Component> lore = new ArrayList<>();
         for (String l : p.lore()) lore.add(legacy(l).colorIfAbsent(NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         lore.add(Component.empty());
-        boolean alcanza = saldo >= p.precio();
+        // Si cobra el plugin del producto (ej. de la cuenta de la empresa), la billetera no dice si alcanza.
+        boolean alcanza = p.cobraPropio() || saldo >= p.precio();
         lore.add(Component.text("Precio: " + dinero(p.precio()), alcanza ? NamedTextColor.GREEN : NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
         lore.add(Component.text(alcanza ? "Click para comprar" : "No te alcanza", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
