@@ -13,7 +13,8 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          # paper-api 26.x viene compilado para Java 25
+          java-version: '25'
           cache: maven
       - name: Compilar plugins
         run: mvn -B package
