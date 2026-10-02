@@ -1,0 +1,20 @@
+name: MinerCorp-GranSede
+version: '${project.version}'
+main: com.isjbar.minercorp.gransede.GranSedePlugin
+api-version: '26.3'
+author: isjbar
+description: La Gran Sede - lugar central con tiendas de vehiculos y taladros, y mina y bosque publicos. Expone GranSedeAPI via ServicesManager.
+depend: [MinerCorp-Economy]
+
+commands:
+  gransede:
+    description: Info de la Gran Sede y herramientas de admin
+    usage: /gransede [ir | pos1 | pos2 | zona | npc | recargar]
+
+permissions:
+  minercorp.gransede.ir:
+    description: Permite teletransportarse a la Gran Sede con /gransede ir
+    default: true
+  minercorp.gransede.admin:
+    description: Permite definir zonas, poner vendedores y construir en la Gran Sede
+    default: op
