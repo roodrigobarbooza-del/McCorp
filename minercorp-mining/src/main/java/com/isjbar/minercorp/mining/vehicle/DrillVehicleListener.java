@@ -4,6 +4,7 @@ import com.isjbar.minercorp.mining.MiningPlugin;
 import com.isjbar.minercorp.mining.company.Company;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import io.papermc.paper.event.player.PrePlayerAttackEntityEvent;
 import org.bukkit.GameMode;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Entity;
@@ -78,6 +79,29 @@ public class DrillVehicleListener implements Listener {
         if (root.addPassenger(player)) {
             vehicles.startDriving(root, player);
         }
+    }
+
+    /** Golpear el taladro (click izquierdo) lo guarda en el garaje de la empresa. */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onAttack(PrePlayerAttackEntityEvent event) {
+        if (!(event.getAttacked() instanceof Interaction seat)) return;
+        Optional<BlockDisplay> rootOpt = vehicles.rootOf(seat);
+        if (rootOpt.isEmpty()) return;
+        event.setCancelled(true);
+
+        Player player = event.getPlayer();
+        BlockDisplay root = rootOpt.get();
+        Optional<Company> company = vehicles.companyOf(root).flatMap(id -> plugin.companies().getById(id));
+        if (company.isEmpty() || !company.get().isMember(player.getUniqueId())) {
+            player.sendActionBar(Component.text("Este taladro no es de tu empresa", NamedTextColor.RED));
+            return;
+        }
+        if (!vehicles.store(company.get(), root)) {
+            player.sendActionBar(Component.text("No se puede guardar mientras alguien lo maneja", NamedTextColor.RED));
+            return;
+        }
+        player.sendMessage(Component.text("Taladro guardado en el garaje de la empresa. Sacalo desde /empresa menu > Taladro-vehiculo.",
+                NamedTextColor.GREEN));
     }
 
     @EventHandler

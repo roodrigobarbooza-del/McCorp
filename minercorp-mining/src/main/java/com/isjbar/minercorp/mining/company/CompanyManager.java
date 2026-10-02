@@ -169,6 +169,15 @@ public class CompanyManager {
                 minionsList.add(map);
             }
             sec.set("minions", minionsList);
+
+            List<Map<String, Object>> drillsList = new ArrayList<>();
+            for (StoredDrill d : c.getStoredDrills()) {
+                Map<String, Object> map = new LinkedHashMap<>();
+                map.put("tier", d.tier());
+                map.put("combustible", d.combustible());
+                drillsList.add(map);
+            }
+            sec.set("taladrosGuardados", drillsList);
         }
 
         try {
@@ -209,6 +218,12 @@ public class CompanyManager {
                 double y = ((Number) map.get("y")).doubleValue();
                 double z = ((Number) map.get("z")).doubleValue();
                 company.getMinions().add(new MinionData(minionId, world, x, y, z));
+            }
+
+            for (Map<?, ?> map : sec.getMapList("taladrosGuardados")) {
+                int tier = map.get("tier") instanceof Number n ? n.intValue() : 1;
+                double combustible = map.get("combustible") instanceof Number n ? n.doubleValue() : 0;
+                company.getStoredDrills().add(new StoredDrill(tier, combustible));
             }
 
             companies.put(id, company);

@@ -3,6 +3,7 @@ package com.isjbar.minercorp.mining.vehicle;
 import com.isjbar.minercorp.economy.api.EconomyAPI;
 import com.isjbar.minercorp.mining.MiningPlugin;
 import com.isjbar.minercorp.mining.company.Company;
+import com.isjbar.minercorp.mining.company.StoredDrill;
 import com.isjbar.minercorp.territory.api.TerritoryAPI;
 import io.papermc.paper.entity.TeleportFlag;
 import net.kyori.adventure.bossbar.BossBar;
@@ -205,6 +206,35 @@ public class DrillVehicleManager {
         modelOf(root).ifPresent(DrillModel::remove);
         linked(root, seatKey).ifPresent(Entity::remove);
         root.remove();
+    }
+
+    /**
+     * Guarda el taladro en el garaje de la empresa (tier y combustible) y lo saca
+     * del mundo. Devuelve false si alguien lo esta manejando.
+     */
+    public boolean store(Company company, BlockDisplay root) {
+        if (!root.getPassengers().isEmpty()) return false;
+        DrillTier tier = tierOf(root);
+        double fuel = fuelOf(root);
+        removeVehicle(root);
+        company.getStoredDrills().add(new StoredDrill(tier.tier(), fuel));
+        plugin.companies().save();
+        return true;
+    }
+
+    /** Saca del garaje el taladro numero {@code index} en la posicion dada, sin cobrarlo. */
+    public PlacementResult deploy(Company company, int index, Location location) {
+        if (index < 0 || index >= company.getStoredDrills().size()) return PlacementResult.TIER_INVALIDO;
+        if (!ownedBy(company.getId(), location.getChunk())) return PlacementResult.FUERA_DE_TERRITORIO;
+        StoredDrill stored = company.getStoredDrills().get(index);
+        int tierNumber = DrillTier.exists(plugin.getConfig(), stored.tier()) ? stored.tier() : 1;
+        DrillTier tier = DrillTier.load(plugin.getConfig(), tierNumber);
+        Location at = location.clone();
+        at.setPitch(0);
+        createEntities(company.getId(), company.getName(), tier, at, Math.min(stored.combustible(), tier.combustible()));
+        company.getStoredDrills().remove(index);
+        plugin.companies().save();
+        return PlacementResult.OK;
     }
 
     /** Taladro de la empresa mas cercano dentro del radio dado. */

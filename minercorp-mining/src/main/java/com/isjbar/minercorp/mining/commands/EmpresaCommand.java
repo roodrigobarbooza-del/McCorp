@@ -4,6 +4,7 @@ import com.isjbar.minercorp.mining.MiningPlugin;
 import com.isjbar.minercorp.mining.company.Company;
 import com.isjbar.minercorp.mining.company.CompanyManager;
 import com.isjbar.minercorp.mining.company.MinionData;
+import com.isjbar.minercorp.mining.company.StoredDrill;
 import com.isjbar.minercorp.mining.gui.MinerCorpMenu;
 import com.isjbar.minercorp.mining.minion.MinionManager;
 import com.isjbar.minercorp.mining.vehicle.DrillTier;
@@ -304,7 +305,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         if (!requireOwnerOrCollab(player, company)) return;
 
         if (args.length < 1) {
-            msg(player, NamedTextColor.YELLOW, "Uso: /empresa taladro <comprar <tier>|cargar [cantidad]|quitar>");
+            msg(player, NamedTextColor.YELLOW, "Uso: /empresa taladro <comprar <tier>|cargar [cantidad]|guardar|sacar [numero]|quitar>");
             return;
         }
 
@@ -321,6 +322,46 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
             }
             plugin.vehicles().removeVehicle(nearest.get());
             msg(player, NamedTextColor.GREEN, "Taladro removido.");
+            return;
+        }
+
+        if (args[0].equalsIgnoreCase("guardar")) {
+            Optional<BlockDisplay> nearest = plugin.vehicles().nearestOwned(company, player.getLocation(), 5);
+            if (nearest.isEmpty()) {
+                msg(player, NamedTextColor.RED, "No hay ningun taladro de tu empresa cerca.");
+                return;
+            }
+            if (!plugin.vehicles().store(company, nearest.get())) {
+                msg(player, NamedTextColor.RED, "No se puede guardar mientras alguien lo maneja.");
+                return;
+            }
+            msg(player, NamedTextColor.GREEN, "Taladro guardado en el garaje. Sacalo con /empresa taladro sacar o desde el menu.");
+            return;
+        }
+
+        if (args[0].equalsIgnoreCase("sacar")) {
+            List<StoredDrill> guardados = company.getStoredDrills();
+            if (guardados.isEmpty()) {
+                msg(player, NamedTextColor.RED, "El garaje de la empresa esta vacio.");
+                return;
+            }
+            int numero = 1;
+            if (args.length >= 2) {
+                try {
+                    numero = Integer.parseInt(args[1]);
+                } catch (NumberFormatException e) {
+                    numero = -1;
+                }
+            }
+            if (numero < 1 || numero > guardados.size()) {
+                msg(player, NamedTextColor.RED, "Numero invalido: el garaje tiene " + guardados.size() + " taladros.");
+                return;
+            }
+            switch (plugin.vehicles().deploy(company, numero - 1, player.getLocation())) {
+                case OK -> msg(player, NamedTextColor.GREEN, "Sacaste el taladro del garaje. Subite con click derecho.");
+                case FUERA_DE_TERRITORIO -> msg(player, NamedTextColor.RED, "Debes estar parado dentro de un territorio reclamado por tu empresa.");
+                default -> msg(player, NamedTextColor.RED, "No se pudo sacar ese taladro.");
+            }
             return;
         }
 
@@ -351,7 +392,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         }
 
         if (!args[0].equalsIgnoreCase("comprar") || args.length < 2) {
-            msg(player, NamedTextColor.YELLOW, "Uso: /empresa taladro <comprar <tier>|cargar [cantidad]|quitar>");
+            msg(player, NamedTextColor.YELLOW, "Uso: /empresa taladro <comprar <tier>|cargar [cantidad]|guardar|sacar [numero]|quitar>");
             return;
         }
         int tier;
@@ -512,6 +553,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
                 "/empresa disolver - disuelve tu empresa (solo el dueno)",
                 "/empresa taladro comprar <tier> - compra un taladro-vehiculo (parado en tu territorio)",
                 "/empresa taladro cargar [cantidad] - carga combustible con carbon crudo de la empresa",
+                "/empresa taladro guardar|sacar [numero] - guarda el taladro cercano en el garaje o lo vuelve a sacar",
                 "/empresa minion <colocar|quitar|lista> - gestiona tus minions",
                 "/empresa refinar <cantidad> - convierte carbon crudo en refinado",
                 "/empresa vender <crudo|refinado> <cantidad> - vende produccion",
@@ -603,7 +645,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length == 2) {
             return switch (args[0].toLowerCase(Locale.ROOT)) {
-                case "taladro" -> List.of("comprar", "cargar", "quitar");
+                case "taladro" -> List.of("comprar", "cargar", "guardar", "sacar", "quitar");
                 case "minion" -> List.of("colocar", "quitar", "lista");
                 case "vender" -> List.of("crudo", "refinado");
                 case "invitar", "expulsar" -> Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();

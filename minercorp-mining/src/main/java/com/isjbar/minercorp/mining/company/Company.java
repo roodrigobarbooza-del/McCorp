@@ -23,6 +23,7 @@ public class Company {
     private double refinedCoal = 0;
 
     private final List<MinionData> minions = new ArrayList<>();
+    private final List<StoredDrill> storedDrills = new ArrayList<>();
 
     public Company(UUID id, String name, UUID owner) {
         this.id = id;
@@ -107,5 +108,10 @@ public class Company {
 
     public List<MinionData> getMinions() {
         return minions;
+    }
+
+    /** Garaje: taladros que se guardaron golpeandolos o con /empresa taladro guardar. */
+    public List<StoredDrill> getStoredDrills() {
+        return storedDrills;
     }
 }

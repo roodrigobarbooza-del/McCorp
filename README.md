@@ -96,6 +96,9 @@ andaba lentisimo y todos los tiers iban igual.
 
 ### Notas
 
+- Golpear el taladro (click izquierdo) lo guarda en el garaje de la empresa,
+  con su combustible. Se vuelve a sacar sin pagar desde `/empresa menu` >
+  Taladro-vehiculo (ultima fila) o con `/empresa taladro sacar`.
 - Los taladros-bote de la version anterior se convierten solos al vehiculo
   nuevo (misma empresa y tier, tanque vacio) cuando se carga su chunk.
 - Si la raiz se borra con `/kill`, la carroceria y el asiento quedan sueltos:
@@ -116,6 +119,8 @@ andaba lentisimo y todos los tiers iban igual.
 /empresa disolver
 /empresa taladro comprar <tier>        (parado dentro de tu territorio)
 /empresa taladro cargar [cantidad]     (combustible con carbon crudo de la empresa)
+/empresa taladro guardar               (guarda el taladro cercano en el garaje de la empresa)
+/empresa taladro sacar [numero]        (saca un taladro del garaje, parado en tu territorio)
 /empresa taladro quitar                (desarma el taladro mas cercano)
 /empresa minion <colocar|quitar|lista>
 /empresa refinar <cantidad>

@@ -111,6 +111,12 @@ public class MenuListener implements Listener {
             MinerCorpMenu.open(plugin, player);
             return;
         }
+        if (action.startsWith(MenuActions.TALADRO_SACAR_PREFIX)) {
+            int index = Integer.parseInt(action.substring(MenuActions.TALADRO_SACAR_PREFIX.length()));
+            sacarTaladro(player, company, index);
+            MinerCorpMenu.openTaladroSubmenu(plugin, player, company);
+            return;
+        }
         if (action.startsWith(MenuActions.TALADRO_TIER_PREFIX)) {
             int tier = Integer.parseInt(action.substring(MenuActions.TALADRO_TIER_PREFIX.length()));
             comprarTaladro(player, company, tier);
@@ -203,6 +209,14 @@ public class MenuListener implements Listener {
         plugin.economy().deposit(company.getId(), total);
         plugin.companies().save();
         msg(player, NamedTextColor.GREEN, "Vendiste " + round(cantidad) + " de carbon " + (refinado ? "refinado" : "crudo") + " por " + round(total) + ".");
+    }
+
+    private void sacarTaladro(Player player, Company company, int index) {
+        switch (plugin.vehicles().deploy(company, index, player.getLocation())) {
+            case OK -> msg(player, NamedTextColor.GREEN, "Sacaste el taladro del garaje. Subite con click derecho.");
+            case FUERA_DE_TERRITORIO -> msg(player, NamedTextColor.RED, "Debes estar parado dentro de un territorio reclamado por tu empresa.");
+            default -> msg(player, NamedTextColor.RED, "Ese taladro ya no esta en el garaje.");
+        }
     }
 
     private void comprarTaladro(Player player, Company company, int tier) {
