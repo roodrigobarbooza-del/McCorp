@@ -155,6 +155,9 @@ public class MenuListener implements Listener {
             case OK -> {
                 plugin.economy().withdraw(company.getId(), costo);
                 msg(player, NamedTextColor.GREEN, "Territorio reclamado para " + company.getName() + ".");
+                if (plugin.obras().darPlanoSiCorresponde(player, company)) {
+                    msg(player, NamedTextColor.GOLD, "Recibiste el Plano de obra: sostenlo y haz clic derecho donde quieras levantar la sede.");
+                }
             }
             case YA_RECLAMADO -> msg(player, NamedTextColor.RED, "Este chunk ya esta reclamado.");
             case SIN_VETA -> msg(player, NamedTextColor.RED, "No hay ninguna veta de carbon en este chunk.");
@@ -163,6 +166,10 @@ public class MenuListener implements Listener {
     }
 
     private void colocarMinion(Player player, Company company) {
+        if (!plugin.obras().sedeLista(company)) {
+            msg(player, NamedTextColor.RED, "Primero termina la obra de la sede de tu empresa (/empresa obra).");
+            return;
+        }
         MinionManager.MinionPlacement result = plugin.minions().place(company, player.getLocation());
         switch (result) {
             case OK -> msg(player, NamedTextColor.GREEN, "Minion colocado.");
@@ -206,6 +213,10 @@ public class MenuListener implements Listener {
     }
 
     private void comprarTaladro(Player player, Company company, int tier) {
+        if (!plugin.obras().sedeLista(company)) {
+            msg(player, NamedTextColor.RED, "Primero termina la obra de la sede de tu empresa (/empresa obra).");
+            return;
+        }
         int maxTier = plugin.levels().tierMaximoDeTaladro(company.getLevel());
         if (tier > maxTier) {
             msg(player, NamedTextColor.RED, "Tu empresa (nivel " + company.getLevel() + ") solo puede comprar hasta el tier " + maxTier + ".");

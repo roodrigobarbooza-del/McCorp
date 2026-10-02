@@ -6,6 +6,8 @@ import com.isjbar.minercorp.mining.company.CompanyManager;
 import com.isjbar.minercorp.mining.company.MinionData;
 import com.isjbar.minercorp.mining.gui.MinerCorpMenu;
 import com.isjbar.minercorp.mining.minion.MinionManager;
+import com.isjbar.minercorp.mining.sede.Obra;
+import com.isjbar.minercorp.mining.sede.SedeBlueprint;
 import com.isjbar.minercorp.mining.vehicle.DrillTier;
 import com.isjbar.minercorp.mining.vehicle.DrillVehicleManager;
 import com.isjbar.minercorp.territory.api.VeinSnapshot;
@@ -34,7 +36,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
     private static final List<String> SUBCOMANDOS = List.of(
             "crear", "info", "reclamar", "liberar", "invitar", "aceptar", "rechazar",
             "expulsar", "salir", "disolver", "taladro", "minion", "refinar", "vender",
-            "depositar", "retirar", "menu", "ayuda"
+            "depositar", "retirar", "obra", "menu", "ayuda"
     );
 
     public EmpresaCommand(MiningPlugin plugin) {
@@ -73,6 +75,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
             case "vender" -> vender(player, rest);
             case "depositar" -> depositar(player, rest);
             case "retirar" -> retirar(player, rest);
+            case "obra" -> obra(player, rest);
             case "menu" -> MinerCorpMenu.open(plugin, player);
             default -> ayuda(player);
         }
@@ -105,7 +108,8 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         }
 
         Company company = plugin.companies().create(nombre, player.getUniqueId());
-        msg(player, NamedTextColor.GREEN, "Fundaste la empresa minera '" + company.getName() + "'. Usa /empresa reclamar parado sobre una veta de carbon.");
+        msg(player, NamedTextColor.GREEN, "Fundaste la empresa minera '" + company.getName() + "'. Usa /empresa reclamar parado sobre una veta de carbon"
+                + " y despues levanta la sede de tu empresa.");
     }
 
     private void info(Player player, String[] args) {
@@ -161,6 +165,9 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
                 VeinSnapshot vein = plugin.territory().getVein(chunk).orElseThrow();
                 msg(player, NamedTextColor.GREEN, "Territorio reclamado para " + company.getName()
                         + ". Se detectaron " + vein.bloquesDetectados() + " bloques de carbon (reserva: " + round(vein.reservaMaxima()) + ").");
+                if (plugin.obras().darPlanoSiCorresponde(player, company)) {
+                    msg(player, NamedTextColor.GOLD, "Recibiste el Plano de obra: sostenlo y haz clic derecho donde quieras levantar la sede.");
+                }
             }
             case YA_RECLAMADO -> msg(player, NamedTextColor.RED, "Este chunk ya esta reclamado.");
             case SIN_VETA -> msg(player, NamedTextColor.RED, "No hay ninguna veta de carbon en este chunk. Busca otra zona.");
@@ -342,6 +349,10 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        if (!plugin.obras().sedeLista(company)) {
+            msg(player, NamedTextColor.RED, "Primero termina la obra de la sede de tu empresa (/empresa obra).");
+            return;
+        }
         DrillVehicleManager.PlacementResult result = plugin.vehicles().spawn(company, tier, player.getLocation());
         switch (result) {
             case OK -> msg(player, NamedTextColor.GREEN, "Taladro comprado y colocado. Cargale carbon (click derecho con carbon o /empresa taladro cargar) y subite con click derecho.");
@@ -363,6 +374,10 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
 
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "colocar" -> {
+                if (!plugin.obras().sedeLista(company)) {
+                    msg(player, NamedTextColor.RED, "Primero termina la obra de la sede de tu empresa (/empresa obra).");
+                    return;
+                }
                 MinionManager.MinionPlacement result = plugin.minions().place(company, player.getLocation());
                 switch (result) {
                     case OK -> msg(player, NamedTextColor.GREEN, "Minion colocado. Extraera carbon automaticamente de la veta de este chunk.");
@@ -476,6 +491,67 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         msg(player, NamedTextColor.GREEN, "Retiraste " + round(cantidad) + " de la empresa a tu saldo personal.");
     }
 
+    private void obra(Player player, String[] args) {
+        Company company = requireCompany(player);
+        if (company == null) return;
+        if (!requireOwnerOrCollab(player, company)) return;
+        String accion = args.length > 0 ? args[0].toLowerCase(Locale.ROOT) : "info";
+        Optional<Obra> obra = plugin.obras().get(company.getId());
+
+        switch (accion) {
+            case "plano" -> {
+                if (company.isSedeInaugurada()) {
+                    msg(player, NamedTextColor.RED, "Tu empresa ya tiene su sede inaugurada.");
+                } else if (obra.isPresent()) {
+                    msg(player, NamedTextColor.RED, "Ya hay una obra en curso. Usa /empresa obra cancelar si quieres moverla.");
+                } else if (plugin.territory().countClaims(company.getId()) == 0) {
+                    msg(player, NamedTextColor.RED, "Primero reclama un territorio con /empresa reclamar.");
+                } else if (plugin.obras().darPlanoSiCorresponde(player, company)) {
+                    msg(player, NamedTextColor.GOLD, "Recibiste el Plano de obra: sostenlo y haz clic derecho donde quieras levantar la sede.");
+                } else {
+                    msg(player, NamedTextColor.YELLOW, "Ya tienes el Plano de obra en el inventario.");
+                }
+            }
+            case "cancelar" -> {
+                if (!requireOwner(player, company)) return;
+                if (obra.isEmpty()) {
+                    msg(player, NamedTextColor.RED, "Tu empresa no tiene ninguna obra en curso.");
+                    return;
+                }
+                plugin.obras().cancelar(company.getId());
+                msg(player, NamedTextColor.GREEN, "Obra cancelada. Los materiales sin usar quedaron junto al cofre. Usa /empresa obra plano para empezar de nuevo.");
+            }
+            default -> {
+                if (company.isSedeInaugurada()) {
+                    msg(player, NamedTextColor.GREEN, "La sede de " + company.getName() + " ya esta inaugurada.");
+                    return;
+                }
+                if (obra.isEmpty()) {
+                    msg(player, NamedTextColor.YELLOW, "Tu empresa todavia no empezo la obra de su sede. Reclama un territorio y usa el Plano de obra"
+                            + " (si lo perdiste: /empresa obra plano).");
+                    return;
+                }
+                Obra o = obra.get();
+                SedeBlueprint plano = plugin.obras().plano();
+                player.sendMessage(Component.text("===== Obra: Sede de " + company.getName() + " =====", NamedTextColor.GOLD));
+                player.sendMessage(linea("Ubicacion", o.world() + " " + o.ax() + ", " + o.ay() + ", " + o.az()));
+                player.sendMessage(linea("Limpieza", plugin.obras().porcentajeLimpieza(o) + "%"));
+                player.sendMessage(linea("Etapas pagadas", o.etapasPagadas() + " / " + plano.etapas()));
+                player.sendMessage(linea("Construido", o.colocados() * 100 / plano.piezas().size() + "%"));
+                if (o.etapasPagadas() < plano.etapas()) {
+                    player.sendMessage(Component.text("Faltan para " + SedeBlueprint.NOMBRES_ETAPAS[o.etapasPagadas()] + ":", NamedTextColor.GRAY));
+                    plano.materiales(o.etapasPagadas()).forEach((m, n) -> {
+                        int falta = n - o.entregado().getOrDefault(m, 0);
+                        if (falta > 0) {
+                            player.sendMessage(Component.text("  - " + falta + " x ", NamedTextColor.GRAY)
+                                    .append(Component.translatable(m.translationKey(), NamedTextColor.WHITE)));
+                        }
+                    });
+                }
+            }
+        }
+    }
+
     private void ayuda(Player player) {
         player.sendMessage(Component.text("===== MinerCorp =====", NamedTextColor.GOLD));
         String[] lineas = {
@@ -485,6 +561,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
                 "/empresa liberar - libera el chunk donde estas parado",
                 "/empresa invitar|aceptar|rechazar|expulsar|salir - gestion de colaboradores",
                 "/empresa disolver - disuelve tu empresa (solo el dueno)",
+                "/empresa obra [plano|cancelar] - estado de la obra de la sede, pedir el plano o cancelarla",
                 "/empresa taladro comprar <tier> - compra un taladro-vehiculo (parado en tu territorio)",
                 "/empresa taladro cargar [cantidad] - carga combustible con carbon crudo de la empresa",
                 "/empresa minion <colocar|quitar|lista> - gestiona tus minions",
@@ -580,6 +657,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
             return switch (args[0].toLowerCase(Locale.ROOT)) {
                 case "taladro" -> List.of("comprar", "cargar", "quitar");
                 case "minion" -> List.of("colocar", "quitar", "lista");
+                case "obra" -> List.of("info", "plano", "cancelar");
                 case "vender" -> List.of("crudo", "refinado");
                 case "invitar", "expulsar" -> Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
                 default -> List.of();
