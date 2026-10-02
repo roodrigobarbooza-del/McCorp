@@ -91,20 +91,21 @@ combustibles:
   gasolina: 80
 
 # --------------------------------------------------------------------------
-# Maquinas. Se dan con /recursos dar <jugador> <id> (mas adelante se compran
-# en la Gran Sede) y se colocan como un bloque, solo en territorio de tu
-# empresa. Click derecho abre el panel. Trabajan mientras el chunk esta
+# Maquinas. Se compran en la Gran Sede (o /recursos dar <jugador> <id>) y se
+# colocan como un bloque (el panel), solo en territorio de tu empresa. Click
+# derecho al panel o al cuerpo abre el menu. Trabajan mientras el chunk esta
 # cargado, igual que un horno.
 #   tipo: veta-carbon (extrae de la veta del chunk), petroleo (extrae del
 #         yacimiento del chunk) o proceso (transforma la entrada)
-#   bloque: bloque que se coloca; el modelo de arriba lo decide "modelo"
+#   bloque: bloque del panel de control
+#   modelo: forma del cuerpo (perforadora, bomba, horno o refineria)
 #   ciclo-segundos: cuanto tarda cada ciclo (con combustible)
 # --------------------------------------------------------------------------
 maquinas:
   perforadora_carbon:
     nombre: "Perforadora de carbon"
     tipo: veta-carbon
-    bloque: LODESTONE
+    bloque: IRON_BLOCK
     modelo: perforadora
     precio: 800.0
     ciclo-segundos: 10
@@ -118,7 +119,7 @@ maquinas:
   bomba_petroleo:
     nombre: "Bomba de petroleo"
     tipo: petroleo
-    bloque: POLISHED_BLACKSTONE
+    bloque: IRON_BLOCK
     modelo: bomba
     precio: 2500.0
     ciclo-segundos: 15
@@ -131,7 +132,7 @@ maquinas:
   horno_coque:
     nombre: "Horno de coque"
     tipo: proceso
-    bloque: BRICKS
+    bloque: IRON_BLOCK
     modelo: horno
     precio: 600.0
     ciclo-segundos: 8
@@ -176,6 +177,22 @@ petroleo:
   barriles-max: 1200
   # Cambiarlo reubica todos los yacimientos (no hace falta tocarlo).
   sal: 7341
+
+# Cada maquina tiene un panel de control (el bloque que se coloca y donde se
+# abre el menu) y detras, del lado opuesto al jugador, su cuerpo: torre de
+# perforacion, balancin, bateria de hornos o refineria, de varios bloques.
+# Si es true, el cuerpo se llena de barreras invisibles para que no se pueda
+# atravesar (se sacan al desarmar la maquina rompiendo el panel).
+colision-maquinas: true
+
+# Resource pack de MinerCorp (modelos 3D de las maquinas e imagenes propias de
+# los recursos). Activalo solo si el server lo manda a los jugadores; sin el
+# pack, las maquinas se arman con bloques vanilla y los recursos usan el
+# material de arriba.
+resourcepack:
+  usar: false
+  # Si con el pack los modelos aparecen girados, se corrige aca (grados).
+  correccion-giro: 0
 
 # Con MinerCorp-GranSede instalado, cada maquina con precio se vende en esta
 # tienda (de la billetera personal del jugador).

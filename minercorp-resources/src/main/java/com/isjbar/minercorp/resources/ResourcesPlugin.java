@@ -112,6 +112,11 @@ public class ResourcesPlugin extends JavaPlugin implements ResourcesAPI {
         return machines;
     }
 
+    /** true si el server manda el resource pack de MinerCorp (modelos e imagenes propias). */
+    public boolean usePack() {
+        return getConfig().getBoolean("resourcepack.usar", false);
+    }
+
     // ------------------------------------------------------------ ResourcesAPI
 
     @Override

@@ -1,0 +1,76 @@
+{
+ "textures": {
+  "t0": "mccorp:resources/maquinas/luz_verde",
+  "particle": "mccorp:resources/maquinas/acero"
+ },
+ "elements": [
+  {
+   "from": [
+    6.72,
+    6.88,
+    6.72
+   ],
+   "to": [
+    9.28,
+    9.12,
+    9.28
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      2.56,
+      2.24
+     ],
+     "texture": "#t0"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      2.56,
+      2.24
+     ],
+     "texture": "#t0"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      2.56,
+      2.24
+     ],
+     "texture": "#t0"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      2.56,
+      2.24
+     ],
+     "texture": "#t0"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      2.56,
+      2.56
+     ],
+     "texture": "#t0"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      2.56,
+      2.56
+     ],
+     "texture": "#t0"
+    }
+   }
+  }
+ ]
+}

@@ -81,6 +81,12 @@ public class MachineListener implements Listener {
             msg(player, NamedTextColor.GOLD, "Ojo: este chunk no tiene petroleo (proba /recursos sondear en otros chunks).");
         }
         int facing = Math.floorMod(Math.round(player.getLocation().getYaw() / 90f), 4);
+        String problem = machines.placementProblem(type.get(), block, facing, owner.orElse(null));
+        if (problem != null) {
+            event.setCancelled(true);
+            msg(player, NamedTextColor.RED, problem + " El cuerpo se arma detras del panel, del lado opuesto a donde estas.");
+            return;
+        }
         machines.place(type.get(), block, owner.orElse(null), facing);
         block.getWorld().playSound(block.getLocation().add(0.5, 0.5, 0.5), Sound.BLOCK_ANVIL_PLACE, SoundCategory.BLOCKS, 0.6f, 1.2f);
         msg(player, NamedTextColor.GREEN, type.get().name() + " colocada. Click derecho para cargarla.");
@@ -91,6 +97,12 @@ public class MachineListener implements Listener {
         Optional<Machine> machine = machines.at(event.getBlock());
         if (machine.isEmpty()) return;
         Player player = event.getPlayer();
+        if (!event.getBlock().equals(machine.get().block())) {
+            // Barrera del cuerpo: la maquina se desarma rompiendo el panel.
+            event.setCancelled(true);
+            msg(player, NamedTextColor.YELLOW, "Para desarmar la maquina rompe su panel de control.");
+            return;
+        }
         if (!canUse(player, machine.get())) {
             event.setCancelled(true);
             msg(player, NamedTextColor.RED, "Esta maquina es de otra empresa.");

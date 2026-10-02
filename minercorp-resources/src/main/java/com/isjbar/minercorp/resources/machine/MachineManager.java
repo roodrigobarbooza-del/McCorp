@@ -10,6 +10,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -43,8 +44,8 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class MachineManager {
 
-    /** Cada cuantos ticks avanza el ciclo de todas las maquinas. */
-    private static final int STEP = 10;
+    /** Cada cuantos ticks avanza el ciclo de todas las maquinas (y sus animaciones). */
+    private static final int STEP = 5;
 
     private final ResourcesPlugin plugin;
     private final ResourceRegistry resources;
@@ -56,7 +57,9 @@ public class MachineManager {
     private final Map<String, MachineType> types = new LinkedHashMap<>();
     private final Map<String, Integer> fuelTicks = new HashMap<>();
     private final Map<UUID, Machine> machines = new LinkedHashMap<>();
+    /** Panel y celdas del cuerpo de cada maquina. */
     private final Map<Block, Machine> byBlock = new HashMap<>();
+    private final Map<String, MachineGeometry> geometries;
     /** Maquinas de mundos que no estan cargados: se guardan tal cual para no perderlas. */
     private final Map<String, ConfigurationSection> unloaded = new LinkedHashMap<>();
 
@@ -71,6 +74,7 @@ public class MachineManager {
         this.territory = territory;
         this.file = new File(plugin.getDataFolder(), "maquinas.yml");
         this.itemKey = new NamespacedKey(plugin, "maquina");
+        this.geometries = MachineGeometry.load(plugin);
         loadTypes(plugin.getConfig());
         load();
     }
@@ -127,6 +131,7 @@ public class MachineManager {
         lore.add(Component.text("Maquina MinerCorp", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
         meta.getPersistentDataContainer().set(itemKey, PersistentDataType.STRING, type.id());
+        if (plugin.usePack()) meta.setItemModel(new NamespacedKey("mccorp", "resources/" + type.id()));
         item.setItemMeta(meta);
         return item;
     }
@@ -146,11 +151,46 @@ public class MachineManager {
         return machines.values();
     }
 
+    public Optional<MachineGeometry> geometry(MachineType type) {
+        return Optional.ofNullable(geometries.get(type.model()));
+    }
+
+    /** Bloques que ocuparia el cuerpo de la maquina con el panel en {@code panel}. */
+    public List<Block> cellsFor(MachineType type, Block panel, int facing) {
+        List<Block> out = new ArrayList<>();
+        MachineGeometry geo = geometries.get(type.model());
+        if (geo == null) return out;
+        var rot = MachineModel.facing(facing);
+        for (int[] c : geo.cells()) {
+            org.joml.Vector3f center = MachineModel.toWorld(rot, new org.joml.Vector3f(c[0] + 0.5f, c[1] + 0.5f, c[2] + 0.5f));
+            out.add(panel.getRelative((int) Math.floor(center.x), (int) Math.floor(center.y), (int) Math.floor(center.z)));
+        }
+        return out;
+    }
+
+    /**
+     * Por que no se puede armar la maquina ahi, o null si se puede: el cuerpo
+     * necesita lugar libre y tiene que quedar entero en territorio del mismo dueno.
+     */
+    public String placementProblem(MachineType type, Block panel, int facing, UUID owner) {
+        for (Block cell : cellsFor(type, panel, facing)) {
+            if (byBlock.containsKey(cell)) return "Choca con otra maquina.";
+            if (!cell.isReplaceable() && cell.getType() != Material.BARRIER) {
+                return "No hay lugar: la maquina ocupa mas espacio detras del panel (hay un bloque en "
+                        + cell.getX() + ", " + cell.getY() + ", " + cell.getZ() + ").";
+            }
+            UUID cellOwner = territory.getOwner(cell.getChunk()).orElse(null);
+            if (owner != null && !owner.equals(cellOwner)) return "La maquina se sale del territorio de tu empresa.";
+        }
+        return null;
+    }
+
     public Machine place(MachineType type, Block block, UUID owner, int facing) {
         Machine machine = new Machine(UUID.randomUUID(), type, block, owner, facing);
         machine.refreshPanel();
         machines.put(machine.id(), machine);
         byBlock.put(block, machine);
+        occupy(machine, true);
         showModel(machine);
         dirty = true;
         save();
@@ -165,16 +205,33 @@ public class MachineManager {
         hideModel(machine);
         machines.remove(machine.id());
         byBlock.remove(machine.block());
+        for (Block cell : machine.cells()) {
+            byBlock.remove(cell);
+            if (cell.getType() == Material.BARRIER) cell.setType(Material.AIR);
+        }
         dirty = true;
         save();
         return drops;
+    }
+
+    /** Registra las celdas del cuerpo y, si {@code barriers}, las llena de barreras invisibles. */
+    private void occupy(Machine machine, boolean barriers) {
+        boolean collision = plugin.getConfig().getBoolean("colision-maquinas", true);
+        for (Block cell : cellsFor(machine.type(), machine.block(), machine.facing())) {
+            machine.cells().add(cell);
+            byBlock.put(cell, machine);
+            if (barriers && collision && cell.isReplaceable()) cell.setType(Material.BARRIER);
+        }
     }
 
     // --------------------------------------------------------------- modelos
 
     public void showModel(Machine machine) {
         if (machine.model != null) return;
-        machine.model = MachineModel.spawn(plugin, machine);
+        MachineGeometry geo = geometries.get(machine.type().model());
+        if (geo == null) return;
+        machine.model = MachineModel.spawn(plugin, machine, geo, plugin.usePack(),
+                (float) plugin.getConfig().getDouble("resourcepack.correccion-giro", 0));
         machine.model.setStatus(label(machine), machine.isRunning());
     }
 
@@ -405,6 +462,7 @@ public class MachineManager {
         for (Machine m : machines.values()) {
             ConfigurationSection sec = yaml.createSection("maquinas." + m.id());
             Block b = m.block();
+            sec.set("version", 2);
             sec.set("tipo", m.type().id());
             sec.set("mundo", b.getWorld().getName());
             sec.set("x", b.getX());
@@ -463,6 +521,8 @@ public class MachineManager {
             m.refreshPanel();
             machines.put(m.id(), m);
             byBlock.put(block, m);
+            // Las maquinas de antes del rediseno no reservaron lugar: se dibujan igual, sin barreras.
+            if (sec.getInt("version", 1) >= 2) occupy(m, false);
         }
     }
 }
