@@ -70,7 +70,7 @@ public class EnvironmentProtectionListener implements Listener {
         if (protegerExplosiones) event.blockList().removeIf(this::reclamado);
     }
 
-    /** Marcos, cuadros, soportes de armadura (minions incluidos) y vehiculos (taladros incluidos). */
+    /** Marcos, cuadros, soportes de armadura (minions incluidos) y vehiculos. */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onExplosionDamage(EntityDamageEvent event) {
         if (!protegerExplosiones) return;

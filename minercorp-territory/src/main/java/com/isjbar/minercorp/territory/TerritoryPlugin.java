@@ -27,6 +27,9 @@ public class TerritoryPlugin extends JavaPlugin {
         ), this);
         getServer().getPluginManager().registerEvents(new TerritoryEntryListener(manager), this);
 
+        long guardado = Math.max(20L, getConfig().getLong("guardado-segundos", 30) * 20L);
+        getServer().getScheduler().runTaskTimer(this, manager::saveIfDirty, guardado, guardado);
+
         getLogger().info("MinerCorp-Territory habilitado.");
     }
 

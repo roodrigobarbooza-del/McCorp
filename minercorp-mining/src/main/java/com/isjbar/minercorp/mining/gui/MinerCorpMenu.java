@@ -60,7 +60,7 @@ public class MinerCorpMenu {
         inv.setItem(11, item(plugin, Material.GRASS_BLOCK, "Reclamar aqui", NamedTextColor.GREEN,
                 List.of("Costo: " + costoReclamar, "Debe haber una veta de carbon en este chunk"), MenuActions.RECLAMAR));
 
-        inv.setItem(12, item(plugin, Material.OAK_BOAT, "Taladro-vehiculo", NamedTextColor.AQUA,
+        inv.setItem(12, item(plugin, Material.IRON_PICKAXE, "Taladro-vehiculo", NamedTextColor.AQUA,
                 List.of("Ver tiers disponibles"), MenuActions.TALADRO_MENU));
 
         inv.setItem(14, item(plugin, Material.VILLAGER_SPAWN_EGG, "Colocar minion", NamedTextColor.LIGHT_PURPLE,
@@ -102,8 +102,9 @@ public class MinerCorpMenu {
             List<String> lore = List.of(
                     "Costo: " + data.costo(),
                     "Rendimiento: +" + Math.round(data.bonusRendimiento() * 100) + "%",
-                    "Radio: " + data.radio(),
-                    "Velocidad: " + data.velocidad(),
+                    "Tunel: " + data.ancho() + "x" + data.alto() + " (profundidad " + data.profundidad() + ")",
+                    "Velocidad: " + Math.round(data.velocidad() * 20 * 10) / 10.0 + " bloques/s",
+                    "Potencia: x" + data.potencia() + "  Tanque: " + (int) data.combustible(),
                     disponible ? "Click para comprar (parado en tu territorio)" : "Requiere mas nivel de empresa"
             );
             inv.setItem(slots[tier - 1], item(plugin, materiales[tier - 1], data.nombre(),

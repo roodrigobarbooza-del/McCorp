@@ -6,6 +6,7 @@ import com.isjbar.minercorp.mining.company.CompanyManager;
 import com.isjbar.minercorp.mining.company.MinionData;
 import com.isjbar.minercorp.mining.gui.MinerCorpMenu;
 import com.isjbar.minercorp.mining.minion.MinionManager;
+import com.isjbar.minercorp.mining.vehicle.DrillTier;
 import com.isjbar.minercorp.mining.vehicle.DrillVehicleManager;
 import com.isjbar.minercorp.territory.api.VeinSnapshot;
 import com.isjbar.minercorp.territory.util.ChunkKey;
@@ -14,7 +15,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Boat;
+import org.bukkit.entity.BlockDisplay;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -278,14 +279,19 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         if (!requireOwnerOrCollab(player, company)) return;
 
         if (args.length < 1) {
-            msg(player, NamedTextColor.YELLOW, "Uso: /empresa taladro <comprar <tier>|quitar>");
+            msg(player, NamedTextColor.YELLOW, "Uso: /empresa taladro <comprar <tier>|cargar [cantidad]|quitar>");
             return;
         }
 
         if (args[0].equalsIgnoreCase("quitar")) {
-            Optional<Boat> nearest = plugin.vehicles().nearestOwned(company, player.getLocation(), 5);
+            int huerfanos = plugin.vehicles().removeOrphanParts(player.getLocation(), 8);
+            Optional<BlockDisplay> nearest = plugin.vehicles().nearestOwned(company, player.getLocation(), 5);
             if (nearest.isEmpty()) {
-                msg(player, NamedTextColor.RED, "No hay ningun taladro de tu empresa cerca.");
+                if (huerfanos > 0) {
+                    msg(player, NamedTextColor.GREEN, "Se limpiaron " + huerfanos + " restos de taladros rotos.");
+                } else {
+                    msg(player, NamedTextColor.RED, "No hay ningun taladro de tu empresa cerca.");
+                }
                 return;
             }
             plugin.vehicles().removeVehicle(nearest.get());
@@ -293,8 +299,34 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        if (args[0].equalsIgnoreCase("cargar")) {
+            Optional<BlockDisplay> nearest = plugin.vehicles().nearestOwned(company, player.getLocation(), 5);
+            if (nearest.isEmpty()) {
+                msg(player, NamedTextColor.RED, "No hay ningun taladro de tu empresa cerca.");
+                return;
+            }
+            double maximo = company.getRawCoal();
+            if (args.length >= 2) {
+                try {
+                    maximo = Double.parseDouble(args[1]);
+                } catch (NumberFormatException e) {
+                    msg(player, NamedTextColor.RED, "Cantidad invalida.");
+                    return;
+                }
+            }
+            double usado = plugin.vehicles().refuelFromRawCoal(company, nearest.get(), maximo);
+            if (usado <= 0) {
+                msg(player, NamedTextColor.RED, "No se pudo cargar: el tanque esta lleno o la empresa no tiene carbon crudo.");
+                return;
+            }
+            DrillTier tier = plugin.vehicles().tierOf(nearest.get());
+            msg(player, NamedTextColor.GREEN, "Usaste " + Math.round(usado * 100.0) / 100.0 + " de carbon crudo. Combustible: "
+                    + (int) Math.ceil(plugin.vehicles().fuelOf(nearest.get())) + "/" + (int) tier.combustible());
+            return;
+        }
+
         if (!args[0].equalsIgnoreCase("comprar") || args.length < 2) {
-            msg(player, NamedTextColor.YELLOW, "Uso: /empresa taladro <comprar <tier>|quitar>");
+            msg(player, NamedTextColor.YELLOW, "Uso: /empresa taladro <comprar <tier>|cargar [cantidad]|quitar>");
             return;
         }
         int tier;
@@ -312,7 +344,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
 
         DrillVehicleManager.PlacementResult result = plugin.vehicles().spawn(company, tier, player.getLocation());
         switch (result) {
-            case OK -> msg(player, NamedTextColor.GREEN, "Taladro comprado y colocado. Subite y manejalo con las teclas normales de bote.");
+            case OK -> msg(player, NamedTextColor.GREEN, "Taladro comprado y colocado. Cargale carbon (click derecho con carbon o /empresa taladro cargar) y subite con click derecho.");
             case TIER_INVALIDO -> msg(player, NamedTextColor.RED, "Ese tier no existe.");
             case FUERA_DE_TERRITORIO -> msg(player, NamedTextColor.RED, "Debes estar parado dentro de un territorio reclamado por tu empresa.");
             case SIN_SALDO -> msg(player, NamedTextColor.RED, "La empresa no tiene saldo suficiente para ese taladro.");
@@ -454,6 +486,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
                 "/empresa invitar|aceptar|rechazar|expulsar|salir - gestion de colaboradores",
                 "/empresa disolver - disuelve tu empresa (solo el dueno)",
                 "/empresa taladro comprar <tier> - compra un taladro-vehiculo (parado en tu territorio)",
+                "/empresa taladro cargar [cantidad] - carga combustible con carbon crudo de la empresa",
                 "/empresa minion <colocar|quitar|lista> - gestiona tus minions",
                 "/empresa refinar <cantidad> - convierte carbon crudo en refinado",
                 "/empresa vender <crudo|refinado> <cantidad> - vende produccion",
@@ -545,14 +578,14 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length == 2) {
             return switch (args[0].toLowerCase(Locale.ROOT)) {
-                case "taladro" -> List.of("comprar", "quitar");
+                case "taladro" -> List.of("comprar", "cargar", "quitar");
                 case "minion" -> List.of("colocar", "quitar", "lista");
                 case "vender" -> List.of("crudo", "refinado");
                 case "invitar", "expulsar" -> Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
                 default -> List.of();
             };
         }
-        if (args.length == 3 && args[0].equalsIgnoreCase("taladro")) {
+        if (args.length == 3 && args[0].equalsIgnoreCase("taladro") && args[1].equalsIgnoreCase("comprar")) {
             return List.of("1", "2", "3");
         }
         return List.of();
