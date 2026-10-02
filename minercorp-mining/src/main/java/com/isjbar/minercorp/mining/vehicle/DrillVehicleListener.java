@@ -37,7 +37,9 @@ public class DrillVehicleListener implements Listener {
         this.vehicles = vehicles;
     }
 
-    @EventHandler(ignoreCancelled = true)
+    // Sin ignoreCancelled: el asiento es nuestro, y si otro plugin (proteccion de
+    // spawn, etc) cancela la interaccion igual tiene que poder cargarse y subirse.
+    @EventHandler(priority = EventPriority.HIGH)
     public void onInteract(PlayerInteractEntityEvent event) {
         if (!(event.getRightClicked() instanceof Interaction seat)) return;
         Optional<BlockDisplay> rootOpt = vehicles.rootOf(seat);

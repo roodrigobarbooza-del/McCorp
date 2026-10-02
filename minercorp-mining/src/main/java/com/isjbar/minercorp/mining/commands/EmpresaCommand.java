@@ -74,6 +74,7 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
             case "depositar" -> depositar(player, rest);
             case "retirar" -> retirar(player, rest);
             case "menu" -> MinerCorpMenu.open(plugin, player);
+            case "darcarbon" -> darCarbon(player, rest);
             default -> ayuda(player);
         }
         return true;
@@ -271,6 +272,30 @@ public class EmpresaCommand implements CommandExecutor, TabCompleter {
         if (!requireOwner(player, company)) return;
         plugin.companies().disband(company);
         msg(player, NamedTextColor.GREEN, "Disolviste la empresa '" + company.getName() + "'.");
+    }
+
+    /** Admin, para pruebas: suma carbon crudo a la empresa del jugador (despues se carga con /empresa taladro cargar). */
+    private void darCarbon(Player player, String[] args) {
+        if (!player.hasPermission("minercorp.admin")) {
+            msg(player, NamedTextColor.RED, "No tenes permiso para hacer esto.");
+            return;
+        }
+        Company company = requireCompany(player);
+        if (company == null) return;
+        double cantidad;
+        try {
+            cantidad = args.length >= 1 ? Double.parseDouble(args[0]) : 0;
+        } catch (NumberFormatException e) {
+            cantidad = 0;
+        }
+        if (cantidad <= 0) {
+            msg(player, NamedTextColor.YELLOW, "Uso: /empresa darcarbon <cantidad>");
+            return;
+        }
+        company.addRawCoal(cantidad);
+        plugin.companies().save();
+        msg(player, NamedTextColor.GREEN, "Sumaste " + cantidad + " de carbon crudo a " + company.getName()
+                + ". Ahora: /empresa taladro cargar");
     }
 
     private void taladro(Player player, String[] args) {

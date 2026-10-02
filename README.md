@@ -101,9 +101,9 @@ andaba lentisimo y todos los tiers iban igual.
 - Si la raiz se borra con `/kill`, la carroceria y el asiento quedan sueltos:
   `/empresa taladro quitar` cerca de ellos los limpia.
 - La altura del asiento se ajusta con `taladros.efectos.altura-asiento`.
-- Si ya tenias un `config.yml` generado, borrale la seccion `taladros:` (o
-  el archivo) para que se regenere con las opciones nuevas. Las claves que
-  falten usan los valores por defecto del plugin.
+- Al arrancar, el plugin completa tu `config.yml` con las claves nuevas que
+  falten. Si todavia tenia la seccion `taladros:` del taladro-bote (con
+  `radio`), la reemplaza entera por la nueva y lo avisa en la consola.
 
 ## Comandos (`/empresa`, alias `/mc`)
 
@@ -124,6 +124,7 @@ andaba lentisimo y todos los tiers iban igual.
 /empresa menu                          (abre el HUD de cofre con botones para lo de arriba)
 /saldo
 /saldo dar <monto> [jugador]           (admin - minercorp.admin, para testear)
+/empresa darcarbon <cantidad>          (admin - suma carbon crudo a tu empresa, para testear el taladro)
 ```
 
 ## Aviso de territorio y menu HUD
