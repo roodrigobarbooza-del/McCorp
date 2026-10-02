@@ -1,5 +1,7 @@
 package com.isjbar.minercorp.mining.company;
 
+import com.isjbar.minercorp.economy.api.AccountType;
+import com.isjbar.minercorp.economy.api.Reason;
 import com.isjbar.minercorp.mining.MiningPlugin;
 import com.isjbar.minercorp.territory.api.ClaimResult;
 import com.isjbar.minercorp.territory.api.TerritoryAPI;
@@ -65,14 +67,26 @@ public class CompanyManager {
         Company company = new Company(UUID.randomUUID(), name, owner);
         companies.put(company.getId(), company);
         syncAuthorized(company);
+        registrarCuenta(company);
         save();
         return company;
+    }
+
+    /** Le dice a MinerCorp-Economy que esta cuenta es una empresa, para el ranking y los avisos al dueno. */
+    public void registrarCuenta(Company company) {
+        plugin.economy().registerAccount(company.getId(), AccountType.COMPANY, company.getName(), company.getOwner());
     }
 
     public void disband(Company company) {
         if (plugin.obras() != null) plugin.obras().cancelar(company.getId());
         for (ChunkKey key : territory.getClaims(company.getId())) {
             resolveChunk(key).ifPresent(chunk -> territory.unclaim(company.getId(), chunk));
+        }
+        // Lo que quedaba en la cuenta de la empresa vuelve al dueno.
+        double resto = plugin.economy().getBalance(company.getId());
+        if (resto > 0) {
+            plugin.economy().transfer(company.getId(), company.getOwner(), resto,
+                    Reason.of(Reason.PAGO, "Cierre de " + company.getName()));
         }
         companies.remove(company.getId());
         save();
@@ -232,6 +246,7 @@ public class CompanyManager {
             }
 
             companies.put(id, company);
+            registrarCuenta(company);
         }
     }
 

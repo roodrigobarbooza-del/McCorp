@@ -4,3 +4,62 @@
 
 # Saldo con el que arranca un jugador la primera vez que se conecta
 saldo-inicial: 100.0
+
+# Como se muestra el dinero: "$1.234,50"
+moneda:
+  simbolo: "$"
+  simbolo-al-final: false
+  separador-miles: "."
+  separador-decimal: ","
+
+# Cada cuantos segundos se guardan las cuentas (solo si hubo cambios).
+# Al apagar el server siempre se guarda.
+guardado:
+  intervalo-segundos: 30
+  # Copias de seguridad de cuentas.yml (una por dia al prender el server)
+  copias-a-conservar: 7
+
+# Cuantos movimientos recuerda cada cuenta
+historial:
+  por-cuenta: 100
+
+# /pagar
+pagos:
+  minimo: 1.0
+  # Desde este monto se pide confirmar con un clic (0 = nunca)
+  confirmar-desde: 1000.0
+  # Comision que se lleva el servidor, en porcentaje (0 = sin comision)
+  comision-porcentaje: 0.0
+
+# Aviso en la action bar cuando entra o sale dinero de tus cuentas
+avisos:
+  action-bar: true
+  # Montos menores a este no avisan (para que los minions no llenen la pantalla)
+  minimo: 1.0
+
+# Textos. Usan MiniMessage: https://docs.advntr.dev/minimessage/format.html
+mensajes:
+  prefijo: "<dark_gray>[<gold>$</gold>]</dark_gray> "
+  sin-permiso: "<red>No tienes permiso para eso."
+  solo-jugadores: "<red>Este comando solo lo puede usar un jugador."
+  cuenta-no-encontrada: "<red>No encontre ninguna cuenta llamada <white><nombre></white>."
+  monto-invalido: "<red><white><monto></white> no es un monto valido. Ejemplos: <white>500</white>, <white>2,5</white>, <white>1.5k</white>."
+  saldo-propio: "<gray>Tu saldo: <green><bold><monto></bold></green>"
+  saldo-otro: "<gray>Saldo de <white><nombre></white>: <green><monto></green>"
+  saldo-cuenta: "<dark_gray> • </dark_gray><gray><nombre>: <green><monto></green>"
+  bienvenida: "<gold>¡Bienvenido a MinerCorp!</gold> <gray>Recibiste <green><monto></green> para empezar."
+  pago-minimo: "<red>El pago minimo es <white><monto></white>."
+  pago-a-si-mismo: "<red>No puedes pagarte a ti mismo."
+  pago-enviado: "<gray>Le pagaste <green><monto></green> a <white><nombre></white>.<comision>"
+  pago-comision: " <dark_gray>(comision <comision>)</dark_gray>"
+  pago-recibido: "<white><nombre></white> <gray>te pago <green><monto></green>."
+  pago-confirmar: "<yellow>Vas a pagarle <white><monto></white> a <white><nombre></white>.<comision> <boton>"
+  pago-boton: "<green><bold>[Confirmar]</bold></green>"
+  pago-sin-pendiente: "<red>No tienes ningun pago para confirmar."
+  fondos-insuficientes: "<red>No te alcanza. Tienes <white><saldo></white> y necesitas <white><monto></white>."
+  historial-vacio: "<gray>Todavia no hay movimientos."
+  top-vacio: "<gray>Todavia no hay nadie en el ranking."
+  admin-hecho: "<green><accion> <white><monto></white> a <white><nombre></white>. Saldo nuevo: <white><saldo></white>."
+  admin-recargado: "<green>Configuracion recargada."
+  action-bar-ingreso: "<green>+<monto></green> <dark_gray>·</dark_gray> <gray><motivo>"
+  action-bar-gasto: "<red>-<monto></red> <dark_gray>·</dark_gray> <gray><motivo>"

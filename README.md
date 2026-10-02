@@ -8,9 +8,10 @@ estilo Vault (via el `ServicesManager` de Bukkit):
   existen "empresas" ni "carbon" especificamente para el dueno del territorio
   (identifica todo por un UUID generico), asi que es reutilizable por
   cualquier otro trabajo futuro (pesca, tala, etc).
-- **MinerCorp-Economy**: billetera por cuenta (jugadores y empresas, todo
-  UUID). Pensado para reemplazarse por un puente a Vault + Essentials el dia
-  que el server los instale, sin tocar los otros plugins.
+- **MinerCorp-Economy**: el dinero. Cuentas de jugadores y empresas (todo
+  UUID), transacciones atomicas con motivo e historial, ranking, `/pagar` y
+  menu `/billetera`. Los otros plugins cobran y pagan con `EconomyAPI`; la
+  guia para usarla esta en la seccion "Economia" mas abajo.
 - **MinerCorp-Mining**: el trabajo de mineria en si - empresas, taladros
   vehiculo, minions, refineria y venta de carbon. Es el unico que sabe que
   existe "carbon".
@@ -127,10 +128,54 @@ andaba lentisimo y todos los tiers iban igual.
 /empresa vender <crudo|refinado> <cantidad>
 /empresa depositar|retirar <monto>
 /empresa menu                          (abre el HUD de cofre con botones para lo de arriba)
-/saldo
-/saldo dar <monto> [jugador]           (admin - minercorp.admin, para testear)
+/saldo [jugador]                       (alias /dinero, /bal; muestra tambien el balance de tus empresas)
+/pagar <jugador o empresa> <monto>     (montos como 500, 2,5, 1.5k; los grandes piden confirmar)
+/movimientos [pagina]                  (historial con detalle al pasar el mouse)
+/top [jugadores|empresas]              (ranking de fortunas)
+/billetera                             (menu: saldo, movimientos, ranking, cambiar entre tus cuentas)
+/eco dar|quitar|fijar <cuenta> <monto> (admin - minercorp.economy.admin)
+/eco ver <cuenta> | stats | recargar   (admin)
 /empresa darcarbon <cantidad>          (admin - suma carbon crudo a tu empresa, para testear el taladro)
 ```
+
+## Economia
+
+- Los montos se guardan en centavos (`long`), asi no hay errores de redondeo
+  y no se aceptan montos negativos ni NaN.
+- `plugins/MinerCorp-Economy/cuentas.yml` se guarda en segundo plano cada 30
+  segundos si hubo cambios, con escritura atomica (archivo temporal + rename),
+  y al apagar el server. Al prender se hace una copia diaria en `copias/`.
+- Cada movimiento queda en el historial de la cuenta (ultimos 100) y en un log
+  de auditoria mensual en `transacciones/AAAA-MM.log`.
+- El `accounts.yml` de la version anterior se migra solo la primera vez y queda
+  como `accounts.yml.v1.bak`.
+- Al cerrar una empresa, lo que quedaba en su cuenta vuelve al dueno.
+- Todos los textos y colores estan en `config.yml` (MiniMessage).
+
+Para otros plugins (cobrar, pagar, vender al sistema, mercados):
+
+```java
+EconomyAPI eco = getServer().getServicesManager().load(EconomyAPI.class);
+
+// Comprar algo en la gran sede (el dinero sale de la economia)
+TransactionResult r = eco.withdraw(jugador, 2500, Reason.of(Reason.COMPRA, "Camion tier 1"));
+if (!r.success()) player.sendMessage(r.message());
+
+// Vender recursos al sistema (el dinero entra a la economia)
+eco.deposit(empresa, 640, Reason.of(Reason.VENTA, "64 barriles de petroleo"));
+
+// Varias patas atomicas: pago al vendedor + comision al servidor
+eco.execute(Transaction.builder(Reason.of(Reason.VENTA, "Mercado: 32 de cobre"))
+        .move(comprador, vendedor, 300)
+        .move(comprador, EconomyAPI.SERVER, 15)
+        .build());
+
+// Empresas: registrarlas para que salgan en el ranking y avisen al dueno
+eco.registerAccount(empresa.getId(), AccountType.COMPANY, empresa.getName(), empresa.getOwner());
+```
+
+`MoneyTransactionEvent` se lanza en el hilo principal despues de cada
+transaccion.
 
 ## Aviso de territorio y menu HUD
 
@@ -162,7 +207,7 @@ darlo por terminado, probar en un server real:
 4. `/empresa taladro comprar 1`, subirse al bote con click derecho y manejarlo contra la veta - el carbon crudo de la empresa debe subir (`/empresa info`) y el bloque debe desaparecer.
 5. `/empresa minion colocar` dentro del territorio - la reserva de la veta debe bajar solo con el tiempo, incluso sin nadie conectado al taladro.
 6. `/empresa refinar <cantidad>` y `/empresa vender crudo <cantidad>` / `vender refinado <cantidad>` - el balance de la empresa (`/empresa info`) debe reflejar la venta.
-7. `/empresa retirar <monto>` (dueno) y `/saldo` - el dinero debe pasar de la empresa al jugador.
+7. `/empresa retirar <monto>` (dueno) y `/saldo` - el dinero debe pasar de la empresa al jugador, y los dos movimientos deben verse en `/movimientos` y `/billetera`.
 8. Reiniciar el server y confirmar que empresas, territorios, vetas y minions persistieron (los taladros tambien, son entidades vanilla que el mundo guarda solo).
 9. Caminar (o manejar el taladro) hacia un chunk reclamado - debe aparecer el action bar; salir y volver a entrar a un chunk distinto de la misma empresa no deberia repetir el mensaje si ya se mostro para ese chunk.
 10. `/empresa menu` sin empresa - solo debe ofrecer "Fundar empresa"; clickearlo, escribir un nombre por chat y confirmar que se crea igual que con `/empresa crear`.

@@ -1,5 +1,6 @@
 package com.isjbar.minercorp.mining.gui;
 
+import com.isjbar.minercorp.economy.api.Reason;
 import com.isjbar.minercorp.mining.MiningPlugin;
 import com.isjbar.minercorp.mining.company.Company;
 import com.isjbar.minercorp.mining.company.CompanyManager;
@@ -138,7 +139,7 @@ public class MenuListener implements Listener {
             return;
         }
         double costo = plugin.getConfig().getDouble("economia.costo-fundar-empresa", 50.0);
-        if (!plugin.economy().withdraw(player.getUniqueId(), costo)) {
+        if (!plugin.economy().withdraw(player.getUniqueId(), costo, Reason.of(Reason.COMPRA, "Fundar la empresa " + nombre)).success()) {
             msg(player, NamedTextColor.RED, "Te faltan fondos. Fundar una empresa cuesta " + costo + ".");
             return;
         }
@@ -159,7 +160,7 @@ public class MenuListener implements Listener {
         CompanyManager.ClaimOutcome result = plugin.companies().claim(company, chunk);
         switch (result) {
             case OK -> {
-                plugin.economy().withdraw(company.getId(), costo);
+                plugin.economy().withdraw(company.getId(), costo, Reason.of(Reason.COMPRA, "Territorio en " + chunk.getX() + ", " + chunk.getZ()));
                 msg(player, NamedTextColor.GREEN, "Territorio reclamado para " + company.getName() + ".");
                 if (plugin.obras().darPlanoSiCorresponde(player, company)) {
                     msg(player, NamedTextColor.GOLD, "Recibiste el Plano de obra: sostenlo y haz clic derecho donde quieras levantar la sede.");
@@ -213,7 +214,8 @@ public class MenuListener implements Listener {
 
         double precio = plugin.getConfig().getDouble(refinado ? "economia.precio-carbon-refinado" : "economia.precio-carbon-crudo", 2.0);
         double total = cantidad * precio;
-        plugin.economy().deposit(company.getId(), total);
+        plugin.economy().deposit(company.getId(), total,
+                Reason.of(Reason.VENTA, round(cantidad) + " de carbon " + (refinado ? "refinado" : "crudo")));
         plugin.companies().save();
         msg(player, NamedTextColor.GREEN, "Vendiste " + round(cantidad) + " de carbon " + (refinado ? "refinado" : "crudo") + " por " + round(total) + ".");
     }

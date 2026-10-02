@@ -2,7 +2,6 @@ package com.isjbar.minercorp.mining;
 
 import com.isjbar.minercorp.economy.api.EconomyAPI;
 import com.isjbar.minercorp.mining.commands.EmpresaCommand;
-import com.isjbar.minercorp.mining.commands.SaldoCommand;
 import com.isjbar.minercorp.mining.company.CompanyManager;
 import com.isjbar.minercorp.mining.company.LevelConfig;
 import com.isjbar.minercorp.mining.gui.MenuListener;
@@ -52,9 +51,6 @@ public class MiningPlugin extends JavaPlugin {
         EmpresaCommand empresaCommand = new EmpresaCommand(this);
         getCommand("empresa").setExecutor(empresaCommand);
         getCommand("empresa").setTabCompleter(empresaCommand);
-        SaldoCommand saldoCommand = new SaldoCommand(this);
-        getCommand("saldo").setExecutor(saldoCommand);
-        getCommand("saldo").setTabCompleter(saldoCommand);
 
         minionManager.start();
         vehicleManager.start();

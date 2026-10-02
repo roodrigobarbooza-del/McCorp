@@ -11,9 +11,6 @@ commands:
     description: Comando principal de MinerCorp
     usage: /empresa <subcomando>
     aliases: [mc, empresamina]
-  saldo:
-    description: Consulta tu saldo personal
-    usage: /saldo
 
 permissions:
   minercorp.use:

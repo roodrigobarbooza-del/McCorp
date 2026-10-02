@@ -3,4 +3,51 @@ version: '${project.version}'
 main: com.isjbar.minercorp.economy.EconomyPlugin
 api-version: '26.3'
 author: isjbar
-description: Economia interna por cuentas (jugadores y empresas). Expone EconomyAPI via ServicesManager. Reemplazable por un puente a Vault.
+description: Economia de MinerCorp - cuentas de jugadores y empresas, transacciones atomicas con historial. Expone EconomyAPI via ServicesManager.
+
+commands:
+  saldo:
+    description: Tu saldo y el de tus empresas
+    usage: /saldo [jugador]
+    aliases: [dinero, bal, balance]
+    permission: minercorp.economy.use
+  pagar:
+    description: Pagarle a un jugador o empresa
+    usage: /pagar <jugador o empresa> <monto>
+    aliases: [pay]
+    permission: minercorp.economy.pagar
+  movimientos:
+    description: Tus ultimos movimientos de dinero
+    usage: /movimientos [pagina]
+    aliases: [historial]
+    permission: minercorp.economy.use
+  top:
+    description: Ranking de los mas ricos
+    usage: /top [jugadores|empresas] [pagina]
+    aliases: [baltop, ranking]
+    permission: minercorp.economy.use
+  billetera:
+    description: Menu de tu billetera
+    usage: /billetera
+    aliases: [wallet, banco]
+    permission: minercorp.economy.use
+  eco:
+    description: Administrar la economia
+    usage: /eco <dar|quitar|fijar|ver|stats|recargar>
+    permission: minercorp.economy.admin
+
+permissions:
+  minercorp.economy.use:
+    description: Ver tu saldo, movimientos, ranking y billetera
+    default: true
+  minercorp.economy.pagar:
+    description: Pagarle a otros jugadores y empresas
+    default: true
+  minercorp.economy.ver-otros:
+    description: Ver el saldo de otros jugadores con /saldo <jugador>
+    default: true
+  minercorp.economy.admin:
+    description: Dar, quitar y fijar dinero, ver cualquier cuenta y estadisticas
+    default: op
+    children:
+      minercorp.economy.ver-otros: true
