@@ -22,6 +22,7 @@ recursos:
   carbon_crudo:
     nombre: "Carbon crudo"
     material: COAL
+    modelo: resources/carbon_crudo
     color: "#8a8a8a"
     precio: 2.0
     descripcion:
@@ -30,6 +31,7 @@ recursos:
   coque:
     nombre: "Coque"
     material: CHARCOAL
+    modelo: resources/coque
     color: "#c9c9d6"
     precio: 6.0
     descripcion:
@@ -38,6 +40,7 @@ recursos:
   alquitran:
     nombre: "Alquitran"
     material: BLACK_DYE
+    modelo: resources/alquitran
     color: "#5a4a3a"
     precio: 3.0
     descripcion:
@@ -45,6 +48,7 @@ recursos:
   petroleo_crudo:
     nombre: "Barril de petroleo crudo"
     material: INK_SAC
+    modelo: resources/petroleo_crudo
     color: "#3b3b3b"
     precio: 8.0
     descripcion:
@@ -61,6 +65,7 @@ recursos:
   diesel:
     nombre: "Bidon de diesel"
     material: YELLOW_DYE
+    modelo: resources/diesel
     color: "#e8d14a"
     precio: 12.0
     descripcion:
@@ -68,6 +73,7 @@ recursos:
   asfalto:
     nombre: "Asfalto"
     material: BLACK_CONCRETE_POWDER
+    modelo: resources/asfalto
     color: "#4a4a4a"
     precio: 4.0
     descripcion:
@@ -75,6 +81,7 @@ recursos:
   azufre:
     nombre: "Azufre"
     material: GLOWSTONE_DUST
+    modelo: resources/azufre
     color: "#f2e85c"
     precio: 5.0
     descripcion:
@@ -95,20 +102,21 @@ combustibles:
   gasolina: 80
 
 # --------------------------------------------------------------------------
-# Maquinas. Se dan con /recursos dar <jugador> <id> (mas adelante se compran
-# en la Gran Sede) y se colocan como un bloque, solo en territorio de tu
-# empresa. Click derecho abre el panel. Trabajan mientras el chunk esta
+# Maquinas. Se compran en la Gran Sede (o /recursos dar <jugador> <id>) y se
+# colocan como un bloque (el panel), solo en territorio de tu empresa. Click
+# derecho al panel o al cuerpo abre el menu. Trabajan mientras el chunk esta
 # cargado, igual que un horno.
 #   tipo: veta-carbon (extrae de la veta del chunk), petroleo (extrae del
 #         yacimiento del chunk) o proceso (transforma la entrada)
-#   bloque: bloque que se coloca; el modelo de arriba lo decide "modelo"
+#   bloque: bloque del panel de control
+#   modelo: forma del cuerpo (perforadora, bomba, horno o refineria)
 #   ciclo-segundos: cuanto tarda cada ciclo (con combustible)
 # --------------------------------------------------------------------------
 maquinas:
   perforadora_carbon:
     nombre: "Perforadora de carbon"
     tipo: veta-carbon
-    bloque: LODESTONE
+    bloque: IRON_BLOCK
     modelo: perforadora
     precio: 800.0
     ciclo-segundos: 10
@@ -122,7 +130,7 @@ maquinas:
   bomba_petroleo:
     nombre: "Bomba de petroleo"
     tipo: petroleo
-    bloque: POLISHED_BLACKSTONE
+    bloque: IRON_BLOCK
     modelo: bomba
     precio: 2500.0
     ciclo-segundos: 15
@@ -135,7 +143,7 @@ maquinas:
   horno_coque:
     nombre: "Horno de coque"
     tipo: proceso
-    bloque: BRICKS
+    bloque: IRON_BLOCK
     modelo: horno
     precio: 600.0
     ciclo-segundos: 8
@@ -180,6 +188,19 @@ petroleo:
   barriles-max: 1200
   # Cambiarlo reubica todos los yacimientos (no hace falta tocarlo).
   sal: 7341
+
+# Cada maquina tiene un panel de control (el bloque que se coloca y donde se
+# abre el menu) y detras, del lado opuesto al jugador, su cuerpo: torre de
+# perforacion, balancin, bateria de hornos o refineria, de varios bloques.
+# Si es true, el cuerpo se llena de barreras invisibles para que no se pueda
+# atravesar (se sacan al desarmar la maquina rompiendo el panel).
+colision-maquinas: true
+
+# Con MinerCorp-Pack instalado y activo, las maquinas usan sus modelos 3D del
+# resource pack (resources/maquinas/...); si no, se arman con bloques vanilla.
+resourcepack:
+  # Si con el pack los modelos aparecen girados, se corrige aca (grados).
+  correccion-giro: 0
 
 # Con MinerCorp-GranSede instalado, cada maquina con precio se vende en esta
 # tienda (de la billetera personal del jugador).

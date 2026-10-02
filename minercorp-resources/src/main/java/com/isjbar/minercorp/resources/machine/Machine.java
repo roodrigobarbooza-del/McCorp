@@ -62,6 +62,8 @@ public class Machine {
     private final UUID owner;
     private final int facing;
     private final Inventory inventory;
+    /** Bloques que ocupa el cuerpo (barreras invisibles), sin contar el panel. */
+    private final List<Block> cells = new ArrayList<>();
 
     int burnLeft;
     int burnMax;
@@ -110,6 +112,10 @@ public class Machine {
 
     public int facing() {
         return facing;
+    }
+
+    public List<Block> cells() {
+        return cells;
     }
 
     public Inventory inventory() {

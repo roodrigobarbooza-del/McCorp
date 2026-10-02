@@ -1,0 +1,76 @@
+{
+ "textures": {
+  "t0": "mccorp:item/resources/maquinas/puerta_horno_luz",
+  "particle": "mccorp:item/resources/maquinas/acero"
+ },
+ "elements": [
+  {
+   "from": [
+    0.0,
+    4.8,
+    7.76
+   ],
+   "to": [
+    16.0,
+    11.2,
+    8.24
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      16,
+      6.4
+     ],
+     "texture": "#t0"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      16,
+      6.4
+     ],
+     "texture": "#t0"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      0.48,
+      6.4
+     ],
+     "texture": "#t0"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      0.48,
+      6.4
+     ],
+     "texture": "#t0"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      16,
+      0.48
+     ],
+     "texture": "#t0"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      16,
+      0.48
+     ],
+     "texture": "#t0"
+    }
+   }
+  }
+ ]
+}

@@ -1,6 +1,6 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "mccorp:item/resources/gasolina"
-  }
+ "parent": "minecraft:item/generated",
+ "textures": {
+  "layer0": "mccorp:item/resources/gasolina"
+ }
 }

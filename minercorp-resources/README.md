@@ -20,12 +20,33 @@ Combustible: cada maquina acepta los de su lista en `config.yml`
 (carbon vanilla, carbon crudo, coque, diesel). El coque y el diesel duran mucho
 mas que el carbon.
 
-| Maquina | Bloque | Entrada | Salida |
+| Maquina | Cuerpo (detras del panel) | Entrada | Salida |
 |---|---|---|---|
-| Perforadora de carbon | lodestone + torre amarilla | veta del chunk | carbon crudo |
-| Bomba de petroleo | blackstone + balancin que sube y baja | yacimiento del chunk | petroleo crudo |
-| Horno de coque | ladrillos + domo con chimenea | 2 carbon crudo | coque (+ alquitran 25%) |
-| Refineria | hierro + columna de destilacion | 1 petroleo crudo | gasolina (+ diesel 60%, asfalto 30%, azufre 10%) |
+| Perforadora de carbon | torre de 8 bloques, piso de perforacion, sarta que gira, casa de motores (3x3) | veta del chunk | carbon crudo |
+| Bomba de petroleo | balancin con cabeza de caballo, manivela con contrapesos, motor (1x7) | yacimiento del chunk | petroleo crudo |
+| Horno de coque | bateria de 4 hornos de ladrillo con puertas que brillan y chimenea de 8 bloques (5x3) | 2 carbon crudo | coque (+ alquitran 25%) |
+| Refineria | horno calentador, columna de destilacion de 9 bloques, tanques y antorcha (5x5) | 1 petroleo crudo | gasolina (+ diesel 60%, asfalto 30%, azufre 10%) |
+
+Cada maquina es un **panel de control** (el bloque que se coloca, donde se
+abre el menu) y su **cuerpo**, que se arma solo detras del panel, del lado
+opuesto a donde estas parado, dejando un bloque de separacion con un conducto
+de cables. El cuerpo necesita lugar libre y tiene que entrar entero en el
+territorio de tu empresa. Se llena de barreras invisibles para que no se
+atraviese (`colision-maquinas`). Click derecho al panel o al cuerpo abre el
+menu; para desarmarla se rompe el panel.
+
+## Resource pack
+
+Con MinerCorp-Pack instalado y activo, las maquinas usan modelos 3D propios
+con texturas (chapa, ladrillo refractario, rejilla, etc) y los recursos tienen
+su propia imagen (bidones de gasolina y diesel, barril de petroleo, coque,
+etc). Sin el pack se arman con bloques vanilla, con la misma forma.
+
+Los archivos del pack estan en `resourcepack/assets/mccorp/{items,models/item,textures/item}/resources/`. Se
+generan con `python3 tools/recursos/generar.py` (necesita Pillow), que tambien
+escribe `src/main/resources/modelos/maquinas.json`, la geometria que lee el
+plugin. Para cambiar la forma de una maquina se edita
+`tools/recursos/geometria.py` y se vuelve a generar.
 
 ## Como se usa
 

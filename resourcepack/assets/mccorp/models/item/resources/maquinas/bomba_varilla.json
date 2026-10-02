@@ -1,0 +1,195 @@
+{
+ "textures": {
+  "t0": "mccorp:item/resources/maquinas/negro",
+  "t1": "mccorp:item/resources/maquinas/acero",
+  "particle": "mccorp:item/resources/maquinas/acero"
+ },
+ "elements": [
+  {
+   "from": [
+    7.68,
+    -4.4,
+    7.68
+   ],
+   "to": [
+    8.32,
+    11.6,
+    8.32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      0.64,
+      16
+     ],
+     "texture": "#t0"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      0.64,
+      16
+     ],
+     "texture": "#t0"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      0.64,
+      16
+     ],
+     "texture": "#t0"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      0.64,
+      16
+     ],
+     "texture": "#t0"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      0.64,
+      0.64
+     ],
+     "texture": "#t0"
+    }
+   }
+  },
+  {
+   "from": [
+    7.68,
+    11.6,
+    7.68
+   ],
+   "to": [
+    8.32,
+    21.2,
+    8.32
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      0.64,
+      9.6
+     ],
+     "texture": "#t0"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      0.64,
+      9.6
+     ],
+     "texture": "#t0"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      0.64,
+      9.6
+     ],
+     "texture": "#t0"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      0.64,
+      9.6
+     ],
+     "texture": "#t0"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      0.64,
+      0.64
+     ],
+     "texture": "#t0"
+    }
+   }
+  },
+  {
+   "from": [
+    6.4,
+    -5.2,
+    6.4
+   ],
+   "to": [
+    9.6,
+    -3.6,
+    9.6
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      0,
+      0,
+      3.2,
+      1.6
+     ],
+     "texture": "#t1"
+    },
+    "south": {
+     "uv": [
+      0,
+      0,
+      3.2,
+      1.6
+     ],
+     "texture": "#t1"
+    },
+    "west": {
+     "uv": [
+      0,
+      0,
+      3.2,
+      1.6
+     ],
+     "texture": "#t1"
+    },
+    "east": {
+     "uv": [
+      0,
+      0,
+      3.2,
+      1.6
+     ],
+     "texture": "#t1"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      3.2,
+      3.2
+     ],
+     "texture": "#t1"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      3.2,
+      3.2
+     ],
+     "texture": "#t1"
+    }
+   }
+  }
+ ]
+}
