@@ -10,12 +10,13 @@
     <packaging>pom</packaging>
 
     <name>MinerCorp</name>
-    <description>Sistema de empresas y trabajos simulados para servidores Minecraft, separado en plugins independientes: Territory, Economy y Mining.</description>
+    <description>Sistema de empresas y trabajos simulados para servidores Minecraft, separado en plugins independientes: Territory, Economy, Mining y GranSede.</description>
 
     <modules>
         <module>minercorp-territory</module>
         <module>minercorp-economy</module>
         <module>minercorp-mining</module>
+        <module>minercorp-gransede</module>
     </modules>
 
     <properties>

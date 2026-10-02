@@ -1,0 +1,114 @@
+# ============================================
+#  MinerCorp-GranSede - configuracion
+# ============================================
+#
+# La Gran Sede es el lugar central del servidor: tiendas de vehiculos y
+# taladros, y una mina y un bosque publicos para ganar los primeros fondos.
+# El edificio lo construyen los admins; este plugin pone las reglas.
+#
+# Zonas (se guardan en zonas.yml, no aca):
+#   /gransede pos1  y  /gransede pos2       -> marcar las dos esquinas
+#   /gransede zona crear <nombre> <SEDE|MINA|BOSQUE>
+#   /gransede zona borrar <nombre>  |  /gransede zona lista
+#   /gransede zona spawn                    -> el punto de /gransede ir
+
+# Si los jugadores pueden ir a la Gran Sede con /gransede ir.
+tp-permitido: true
+# Mandar a los jugadores nuevos (primera vez que entran) a la Gran Sede.
+spawn-jugadores-nuevos: true
+mensaje-bienvenida:
+  - "&6Bienvenido a la Gran Sede."
+  - "&7Trabaja en la &fMina&7 o el &fBosque&7 para juntar tus primeros fondos."
+  - "&7Despues funda tu empresa con &f/empresa&7 y volve aca a comprar tu primer taladro o camion."
+
+# Zona SEDE: que se bloquea ademas de romper y poner bloques.
+proteccion:
+  sin-pvp: true
+  sin-mobs-hostiles: true
+  sin-explosiones: true
+  sin-fuego: true
+
+# Trabajos de inicio. Cada bloque roto paga su jornal a la billetera del
+# jugador, no suelta items y se regenera solo.
+trabajos:
+  # Tope de dinero por hora por jugador sumando mina y bosque, para que la
+  # Gran Sede nunca rinda mas que una empresa. 0 = sin tope.
+  tope-por-hora: 400.0
+
+  mina:
+    # Segundos hasta que el bloque vuelve.
+    regeneracion-segundos: 20
+    # En que se convierte el bloque mientras se regenera (no se puede romper).
+    bloque-agotado: SMOOTH_STONE
+    # Jornal por material. Solo se pueden romper estos.
+    pago:
+      STONE: 0.5
+      COBBLESTONE: 0.5
+      COAL_ORE: 3.0
+      COPPER_ORE: 3.0
+      IRON_ORE: 5.0
+      GOLD_ORE: 8.0
+    # Que bloque vuelve, sorteado por peso.
+    regenera:
+      STONE: 70
+      COAL_ORE: 14
+      COPPER_ORE: 8
+      IRON_ORE: 6
+      GOLD_ORE: 2
+
+  bosque:
+    regeneracion-segundos: 30
+    bloque-agotado: STRIPPED_OAK_LOG
+    pago:
+      OAK_LOG: 1.5
+      BIRCH_LOG: 1.5
+      SPRUCE_LOG: 1.5
+      DARK_OAK_LOG: 2.0
+    # En el bosque cada tronco vuelve igual que era (regenera: MISMO).
+    regenera: MISMO
+
+# Tiendas. Cada una se atiende con un vendedor (/gransede npc crear <tienda>).
+# Los plugins de vehiculos, taladros y minerales agregan sus productos solos
+# con GranSedeAPI. Aca van los que no necesitan codigo:
+#   item: MATERIAL [cantidad]               -> da un item vanilla
+#   comando: "comando de consola %player%"  -> corre un comando de consola
+tiendas:
+  concesionaria:
+    titulo: "Concesionaria"
+    vendedor: "&bVendedor de vehiculos"
+    profesion: TOOLSMITH
+    productos: {}
+  taladros:
+    titulo: "Taladros"
+    vendedor: "&6Vendedor de taladros"
+    profesion: ARMORER
+    productos: {}
+  ferreteria:
+    titulo: "Ferreteria"
+    vendedor: "&aFerretero"
+    profesion: WEAPONSMITH
+    productos:
+      pico-piedra:
+        nombre: "Pico de piedra"
+        precio: 5
+        item: STONE_PICKAXE 1
+      pico-hierro:
+        nombre: "Pico de hierro"
+        precio: 40
+        item: IRON_PICKAXE 1
+      hacha-piedra:
+        nombre: "Hacha de piedra"
+        precio: 5
+        item: STONE_AXE 1
+      hacha-hierro:
+        nombre: "Hacha de hierro"
+        precio: 40
+        item: IRON_AXE 1
+      antorchas:
+        nombre: "Antorchas x16"
+        precio: 4
+        item: TORCH 16
+      pan:
+        nombre: "Pan x8"
+        precio: 6
+        item: BREAD 8
