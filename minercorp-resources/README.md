@@ -37,13 +37,12 @@ menu; para desarmarla se rompe el panel.
 
 ## Resource pack
 
-Con `resourcepack.usar: true` (cuando el server manda el pack a los
-jugadores), las maquinas usan modelos 3D propios con texturas (chapa, ladrillo
-refractario, rejilla, etc) y los recursos tienen su propia imagen (bidones de
-gasolina y diesel, barril de petroleo, coque, etc). Sin el pack se arman con
-bloques vanilla, con la misma forma.
+Con MinerCorp-Pack instalado y activo, las maquinas usan modelos 3D propios
+con texturas (chapa, ladrillo refractario, rejilla, etc) y los recursos tienen
+su propia imagen (bidones de gasolina y diesel, barril de petroleo, coque,
+etc). Sin el pack se arman con bloques vanilla, con la misma forma.
 
-Los archivos del pack estan en `resourcepack/assets/mccorp/*/resources/`. Se
+Los archivos del pack estan en `resourcepack/assets/mccorp/{items,models/item,textures/item}/resources/`. Se
 generan con `python3 tools/recursos/generar.py` (necesita Pillow), que tambien
 escribe `src/main/resources/modelos/maquinas.json`, la geometria que lee el
 plugin. Para cambiar la forma de una maquina se edita

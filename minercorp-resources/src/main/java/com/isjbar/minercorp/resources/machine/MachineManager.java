@@ -2,6 +2,7 @@ package com.isjbar.minercorp.resources.machine;
 
 import com.isjbar.minercorp.resources.ResourcesPlugin;
 import com.isjbar.minercorp.resources.oil.OilFieldManager;
+import com.isjbar.minercorp.resources.resource.PackModels;
 import com.isjbar.minercorp.resources.resource.ResourceRegistry;
 import com.isjbar.minercorp.territory.api.TerritoryAPI;
 import com.isjbar.minercorp.territory.api.VeinSnapshot;
@@ -131,8 +132,8 @@ public class MachineManager {
         lore.add(Component.text("Maquina MinerCorp", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
         meta.getPersistentDataContainer().set(itemKey, PersistentDataType.STRING, type.id());
-        if (plugin.usePack()) meta.setItemModel(new NamespacedKey("mccorp", "resources/" + type.id()));
         item.setItemMeta(meta);
+        PackModels.apply(item, "resources/" + type.id());
         return item;
     }
 
@@ -230,7 +231,7 @@ public class MachineManager {
         if (machine.model != null) return;
         MachineGeometry geo = geometries.get(machine.type().model());
         if (geo == null) return;
-        machine.model = MachineModel.spawn(plugin, machine, geo, plugin.usePack(),
+        machine.model = MachineModel.spawn(plugin, machine, geo, PackModels.active(),
                 (float) plugin.getConfig().getDouble("resourcepack.correccion-giro", 0));
         machine.model.setStatus(label(machine), machine.isRunning());
     }

@@ -1,6 +1,6 @@
 {
  "model": {
   "type": "minecraft:model",
-  "model": "mccorp:resources/items/carbon_crudo"
+  "model": "mccorp:item/resources/carbon_crudo"
  }
 }

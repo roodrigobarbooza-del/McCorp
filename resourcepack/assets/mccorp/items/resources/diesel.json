@@ -1,6 +1,6 @@
 {
  "model": {
   "type": "minecraft:model",
-  "model": "mccorp:resources/items/diesel"
+  "model": "mccorp:item/resources/diesel"
  }
 }

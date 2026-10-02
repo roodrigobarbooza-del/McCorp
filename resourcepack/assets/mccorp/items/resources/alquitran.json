@@ -1,6 +1,6 @@
 {
  "model": {
   "type": "minecraft:model",
-  "model": "mccorp:resources/items/alquitran"
+  "model": "mccorp:item/resources/alquitran"
  }
 }

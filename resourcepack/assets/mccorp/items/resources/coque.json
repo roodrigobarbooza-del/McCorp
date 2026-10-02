@@ -1,6 +1,6 @@
 {
  "model": {
   "type": "minecraft:model",
-  "model": "mccorp:resources/items/coque"
+  "model": "mccorp:item/resources/coque"
  }
 }

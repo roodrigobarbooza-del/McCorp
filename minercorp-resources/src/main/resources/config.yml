@@ -14,11 +14,15 @@
 #   material: item vanilla que se ve en el inventario
 #   color: color del nombre (hex)
 #   precio: lo que paga /recursos vender por unidad
+#   modelo: (opcional) imagen propia del resource pack de McCorp, la ruta
+#           dentro de resourcepack/assets/mccorp/items sin .json. Solo se ve
+#           con MinerCorp-Pack instalado; si no, se ve "material".
 # --------------------------------------------------------------------------
 recursos:
   carbon_crudo:
     nombre: "Carbon crudo"
     material: COAL
+    modelo: resources/carbon_crudo
     color: "#8a8a8a"
     precio: 2.0
     descripcion:
@@ -27,6 +31,7 @@ recursos:
   coque:
     nombre: "Coque"
     material: CHARCOAL
+    modelo: resources/coque
     color: "#c9c9d6"
     precio: 6.0
     descripcion:
@@ -35,6 +40,7 @@ recursos:
   alquitran:
     nombre: "Alquitran"
     material: BLACK_DYE
+    modelo: resources/alquitran
     color: "#5a4a3a"
     precio: 3.0
     descripcion:
@@ -42,6 +48,7 @@ recursos:
   petroleo_crudo:
     nombre: "Barril de petroleo crudo"
     material: INK_SAC
+    modelo: resources/petroleo_crudo
     color: "#3b3b3b"
     precio: 8.0
     descripcion:
@@ -50,6 +57,7 @@ recursos:
   gasolina:
     nombre: "Bidon de gasolina"
     material: ORANGE_DYE
+    modelo: resources/gasolina
     color: "#ff9a1f"
     precio: 14.0
     descripcion:
@@ -57,6 +65,7 @@ recursos:
   diesel:
     nombre: "Bidon de diesel"
     material: YELLOW_DYE
+    modelo: resources/diesel
     color: "#e8d14a"
     precio: 12.0
     descripcion:
@@ -64,6 +73,7 @@ recursos:
   asfalto:
     nombre: "Asfalto"
     material: BLACK_CONCRETE_POWDER
+    modelo: resources/asfalto
     color: "#4a4a4a"
     precio: 4.0
     descripcion:
@@ -71,6 +81,7 @@ recursos:
   azufre:
     nombre: "Azufre"
     material: GLOWSTONE_DUST
+    modelo: resources/azufre
     color: "#f2e85c"
     precio: 5.0
     descripcion:
@@ -185,12 +196,9 @@ petroleo:
 # atravesar (se sacan al desarmar la maquina rompiendo el panel).
 colision-maquinas: true
 
-# Resource pack de MinerCorp (modelos 3D de las maquinas e imagenes propias de
-# los recursos). Activalo solo si el server lo manda a los jugadores; sin el
-# pack, las maquinas se arman con bloques vanilla y los recursos usan el
-# material de arriba.
+# Con MinerCorp-Pack instalado y activo, las maquinas usan sus modelos 3D del
+# resource pack (resources/maquinas/...); si no, se arman con bloques vanilla.
 resourcepack:
-  usar: false
   # Si con el pack los modelos aparecen girados, se corrige aca (grados).
   correccion-giro: 0
 

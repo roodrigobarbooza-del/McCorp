@@ -31,8 +31,6 @@ public class ResourceRegistry {
     private final Plugin plugin;
     private final NamespacedKey key;
     private final Map<String, ResourceType> types = new LinkedHashMap<>();
-    /** Con el resource pack, cada recurso usa su imagen propia (mccorp:resources/&lt;id&gt;). */
-    private boolean usePack;
 
     public ResourceRegistry(Plugin plugin) {
         this.plugin = plugin;
@@ -41,7 +39,6 @@ public class ResourceRegistry {
 
     public void load(FileConfiguration config) {
         types.clear();
-        usePack = config.getBoolean("resourcepack.usar", false);
         ConfigurationSection root = config.getConfigurationSection("recursos");
         if (root == null) return;
         for (String id : root.getKeys(false)) {
@@ -57,6 +54,7 @@ public class ResourceRegistry {
                     id.toLowerCase(Locale.ROOT),
                     sec.getString("nombre", id),
                     material,
+                    sec.getString("modelo"),
                     color == null ? NamedTextColor.WHITE : color,
                     sec.getDouble("precio", 0),
                     sec.getStringList("descripcion")));
@@ -91,8 +89,8 @@ public class ResourceRegistry {
         lore.add(Component.text("Recurso MinerCorp", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
         meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, type.id());
-        if (usePack) meta.setItemModel(new NamespacedKey("mccorp", "resources/" + type.id()));
         item.setItemMeta(meta);
+        if (type.model() != null) PackModels.apply(item, type.model());
         return item;
     }
 

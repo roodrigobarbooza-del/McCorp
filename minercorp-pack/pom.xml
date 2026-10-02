@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.isjbar</groupId>
+        <artifactId>minercorp-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>minercorp-pack</artifactId>
+    <packaging>jar</packaging>
+
+    <name>MinerCorp-Pack</name>
+    <description>Resource pack de McCorp: lo manda a los jugadores al entrar (sirviendolo el mismo o desde una URL) y da Modelos para que los demas plugins le pongan modelo propio a items y displays.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.name}-${project.version}</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <!-- Mete la carpeta resourcepack/ de la raiz del repo, ya zipeada, dentro del jar. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>zip-resourcepack</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <zip destfile="${project.build.outputDirectory}/mccorp-pack.zip"
+                                     basedir="${project.basedir}/../resourcepack"
+                                     excludes="**/.gitkeep,**/*.md"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

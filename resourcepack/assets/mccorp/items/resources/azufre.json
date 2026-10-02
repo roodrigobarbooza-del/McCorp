@@ -1,6 +1,6 @@
 {
  "model": {
   "type": "minecraft:model",
-  "model": "mccorp:resources/items/azufre"
+  "model": "mccorp:item/resources/azufre"
  }
 }

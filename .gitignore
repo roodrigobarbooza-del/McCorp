@@ -2,4 +2,5 @@ target/
 *.class
 .idea/
 *.iml
+build/
 __pycache__/

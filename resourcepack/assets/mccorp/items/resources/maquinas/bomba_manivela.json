@@ -1,6 +1,6 @@
 {
  "model": {
   "type": "minecraft:model",
-  "model": "mccorp:resources/maquinas/bomba_manivela"
+  "model": "mccorp:item/resources/maquinas/bomba_manivela"
  }
 }

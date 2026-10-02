@@ -1,6 +1,6 @@
 {
  "model": {
   "type": "minecraft:model",
-  "model": "mccorp:resources/maquinas/horno_panel"
+  "model": "mccorp:item/resources/maquinas/horno_panel"
  }
 }

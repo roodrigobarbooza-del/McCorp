@@ -1,6 +1,6 @@
 {
  "model": {
   "type": "minecraft:model",
-  "model": "mccorp:resources/items/bomba_petroleo"
+  "model": "mccorp:item/resources/bomba_petroleo"
  }
 }

@@ -1,7 +1,7 @@
 """
 Genera, a partir de geometria.py y texturas.py:
   - minercorp-resources/src/main/resources/modelos/maquinas.json (lo lee el plugin)
-  - resourcepack/assets/mccorp/{items,models,textures}/resources/... (modelos y texturas)
+  - resourcepack/assets/mccorp/{items,models/item,textures/item}/resources/... (modelos y texturas)
 
 Uso, desde la raiz del repo:  python3 tools/recursos/generar.py
 Requiere Pillow (pip install pillow).
@@ -101,26 +101,26 @@ def modelo_parte(maquina, parte, cajas):
                                           "origin": [m(o[0], 0), m(o[1], 1), m(o[2], 2)], "rescale": False}
                     elementos.append(el)
     modelo = {
-        "textures": dict({v: "%s:%s/maquinas/%s" % (NS, CARPETA, k_) for k_, v in texs.items()},
-                         particle="%s:%s/maquinas/acero" % (NS, CARPETA)),
+        "textures": dict({v: "%s:item/%s/maquinas/%s" % (NS, CARPETA, k_) for k_, v in texs.items()},
+                         particle="%s:item/%s/maquinas/acero" % (NS, CARPETA)),
         "elements": elementos,
     }
     nombre = "%s_%s" % (maquina, parte.id)
-    escribir(os.path.join(PACK, "models", CARPETA, "maquinas", nombre + ".json"), modelo)
+    escribir(os.path.join(PACK, "models", "item", CARPETA, "maquinas", nombre + ".json"), modelo)
     escribir(os.path.join(PACK, "items", CARPETA, "maquinas", nombre + ".json"),
-             {"model": {"type": "minecraft:model", "model": "%s:%s/maquinas/%s" % (NS, CARPETA, nombre)}})
+             {"model": {"type": "minecraft:model", "model": "%s:item/%s/maquinas/%s" % (NS, CARPETA, nombre)}})
     return "%s:%s/maquinas/%s" % (NS, CARPETA, nombre), [r4(v) for v in centro], r4(k)
 
 
 def main():
     for nombre, im in texturas.maquinas().items():
-        escribir(os.path.join(PACK, "textures", CARPETA, "maquinas", nombre + ".png"), im)
+        escribir(os.path.join(PACK, "textures", "item", CARPETA, "maquinas", nombre + ".png"), im)
     for nombre, im in texturas.items().items():
-        escribir(os.path.join(PACK, "textures", CARPETA, "items", nombre + ".png"), im)
-        escribir(os.path.join(PACK, "models", CARPETA, "items", nombre + ".json"),
-                 {"parent": "minecraft:item/generated", "textures": {"layer0": "%s:%s/items/%s" % (NS, CARPETA, nombre)}})
+        escribir(os.path.join(PACK, "textures", "item", CARPETA, nombre + ".png"), im)
+        escribir(os.path.join(PACK, "models", "item", CARPETA, nombre + ".json"),
+                 {"parent": "minecraft:item/generated", "textures": {"layer0": "%s:item/%s/%s" % (NS, CARPETA, nombre)}})
         escribir(os.path.join(PACK, "items", CARPETA, nombre + ".json"),
-                 {"model": {"type": "minecraft:model", "model": "%s:%s/items/%s" % (NS, CARPETA, nombre)}})
+                 {"model": {"type": "minecraft:model", "model": "%s:item/%s/%s" % (NS, CARPETA, nombre)}})
 
     salida = {}
     for maquina, fn in geometria.MAQUINAS.items():
