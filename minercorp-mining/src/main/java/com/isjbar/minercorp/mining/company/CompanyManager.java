@@ -70,6 +70,7 @@ public class CompanyManager {
     }
 
     public void disband(Company company) {
+        if (plugin.obras() != null) plugin.obras().cancelar(company.getId());
         for (ChunkKey key : territory.getClaims(company.getId())) {
             resolveChunk(key).ifPresent(chunk -> territory.unclaim(company.getId(), chunk));
         }
@@ -112,6 +113,7 @@ public class CompanyManager {
     }
 
     public void unclaim(Company company, Chunk chunk) {
+        if (plugin.obras() != null) plugin.obras().alLiberarChunk(company.getId(), chunk);
         territory.unclaim(company.getId(), chunk);
     }
 
@@ -157,6 +159,7 @@ public class CompanyManager {
             sec.set("level", c.getLevel());
             sec.set("rawCoal", c.getRawCoal());
             sec.set("refinedCoal", c.getRefinedCoal());
+            sec.set("sede-inaugurada", c.isSedeInaugurada());
 
             List<Map<String, Object>> minionsList = new ArrayList<>();
             for (MinionData m : c.getMinions()) {
@@ -210,6 +213,8 @@ public class CompanyManager {
             company.setLevel(sec.getInt("level", 1));
             company.addRawCoal(sec.getDouble("rawCoal", 0));
             company.addRefinedCoal(sec.getDouble("refinedCoal", 0));
+            // Las empresas de antes de que existiera la obra ya tenian minions y taladros: no se les quitan.
+            company.setSedeInaugurada(sec.getBoolean("sede-inaugurada", true));
 
             for (Map<?, ?> map : sec.getMapList("minions")) {
                 UUID minionId = UUID.fromString((String) map.get("id"));

@@ -25,6 +25,9 @@ public class Company {
     private final List<MinionData> minions = new ArrayList<>();
     private final List<StoredDrill> storedDrills = new ArrayList<>();
 
+    /** True cuando la obra de la sede ya se termino (habilita minions y taladros). */
+    private boolean sedeInaugurada;
+
     public Company(UUID id, String name, UUID owner) {
         this.id = id;
         this.name = name;
@@ -104,6 +107,14 @@ public class Company {
         if (refinedCoal < amount) return false;
         refinedCoal -= amount;
         return true;
+    }
+
+    public boolean isSedeInaugurada() {
+        return sedeInaugurada;
+    }
+
+    public void setSedeInaugurada(boolean sedeInaugurada) {
+        this.sedeInaugurada = sedeInaugurada;
     }
 
     public List<MinionData> getMinions() {

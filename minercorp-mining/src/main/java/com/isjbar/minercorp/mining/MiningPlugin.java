@@ -7,6 +7,8 @@ import com.isjbar.minercorp.mining.company.CompanyManager;
 import com.isjbar.minercorp.mining.company.LevelConfig;
 import com.isjbar.minercorp.mining.gui.MenuListener;
 import com.isjbar.minercorp.mining.minion.MinionManager;
+import com.isjbar.minercorp.mining.sede.ObraListener;
+import com.isjbar.minercorp.mining.sede.ObraManager;
 import com.isjbar.minercorp.mining.vehicle.DrillVehicleListener;
 import com.isjbar.minercorp.mining.vehicle.DrillVehicleManager;
 import com.isjbar.minercorp.territory.api.TerritoryAPI;
@@ -19,6 +21,7 @@ public class MiningPlugin extends JavaPlugin {
     private LevelConfig levelConfig;
     private MinionManager minionManager;
     private DrillVehicleManager vehicleManager;
+    private ObraManager obraManager;
     private TerritoryAPI territoryAPI;
     private EconomyAPI economyAPI;
 
@@ -40,9 +43,11 @@ public class MiningPlugin extends JavaPlugin {
         this.companyManager = new CompanyManager(this, territoryAPI);
         this.minionManager = new MinionManager(this, territoryAPI, economyAPI);
         this.vehicleManager = new DrillVehicleManager(this, territoryAPI, economyAPI);
+        this.obraManager = new ObraManager(this, territoryAPI);
 
         getServer().getPluginManager().registerEvents(new DrillVehicleListener(this, vehicleManager), this);
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
+        getServer().getPluginManager().registerEvents(new ObraListener(this, obraManager), this);
 
         EmpresaCommand empresaCommand = new EmpresaCommand(this);
         getCommand("empresa").setExecutor(empresaCommand);
@@ -53,6 +58,7 @@ public class MiningPlugin extends JavaPlugin {
 
         minionManager.start();
         vehicleManager.start();
+        obraManager.start();
 
         getLogger().info("MinerCorp-Mining habilitado - " + companyManager.all().size() + " empresas cargadas.");
     }
@@ -61,6 +67,7 @@ public class MiningPlugin extends JavaPlugin {
     public void onDisable() {
         if (minionManager != null) minionManager.stop();
         if (vehicleManager != null) vehicleManager.stop();
+        if (obraManager != null) obraManager.stop();
         if (companyManager != null) companyManager.save();
     }
 
@@ -107,6 +114,10 @@ public class MiningPlugin extends JavaPlugin {
 
     public MinionManager minions() {
         return minionManager;
+    }
+
+    public ObraManager obras() {
+        return obraManager;
     }
 
     public DrillVehicleManager vehicles() {
