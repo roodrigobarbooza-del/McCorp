@@ -7,7 +7,7 @@ import org.bukkit.inventory.InventoryHolder;
 public class MenuHolder implements InventoryHolder {
 
     public enum Pantalla {
-        PRINCIPAL, TALADRO
+        PRINCIPAL
     }
 
     private final Pantalla pantalla;

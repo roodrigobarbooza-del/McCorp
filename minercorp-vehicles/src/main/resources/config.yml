@@ -1,0 +1,255 @@
+# ============================================
+#  MinerCorp-Vehicles - configuracion
+# ============================================
+#
+# Los vehiculos se compran en el concesionario de la gran sede (el plugin de
+# la gran sede usa VehiclesAPI) y van al garaje del dueno: /garaje para
+# sacarlos, golpearlos (click izquierdo) para guardarlos.
+#
+# Controles al manejar:
+#   W -> acelerar        S -> frenar / reversa
+#   A / D -> doblar (los de ruedas solo doblan en movimiento; las orugas del
+#            taladro giran en el lugar)
+#   Espacio -> freno de mano      Shift -> bajarse
+# Click derecho: subirse (al volante si esta libre y es tuyo, si no de
+# acompanante). Con combustible en la mano lo carga. Shift + click derecho
+# abre la carga.
+
+# Con MinerCorp-GranSede instalado, los vehiculos se venden solos en sus
+# tiendas: los taladros en "taladros" y el resto en "concesionaria" (hay que
+# poner los vendedores con /gransede npc crear). /vehiculo tienda abre ademas
+# un concesionario por comando; ponerlo en false para que solo se compren en
+# la gran sede.
+tienda-por-comando: true
+tienda-gran-sede:
+  vehiculos: concesionaria
+  taladros: taladros
+
+# Cada cuantos segundos se guardan garajes y empresas mientras se maneja.
+guardado-segundos: 30
+
+efectos:
+  particulas: true
+  sonidos: true
+  volumen: 0.8
+  # Sonido del motor y cada cuantos ticks se repite (el tono sube con la velocidad).
+  sonido-motor: "entity.minecart.riding"
+  intervalo-motor: 20
+  # Aviso cuando algo frena al vehiculo (pared, agua, fin del territorio).
+  sonido-bloqueado: "block.anvil.land"
+
+# Combustibles que se cargan con items en la mano. Otros plugins pueden
+# registrar los suyos por VehiclesAPI con su propio id; cada tipo de vehiculo
+# dice abajo cuales acepta.
+combustibles:
+  carbon:
+    nombre: "Carbon"
+    # Litros que da cada item.
+    items:
+      COAL: 10
+      CHARCOAL: 10
+      COAL_BLOCK: 90
+    # Litros por unidad de carbon crudo de la empresa (/vehiculo cargar).
+    por-carbon-crudo: 5
+
+# Items de MinerCorp-Recursos que sirven de combustible, si esta instalado:
+# id del recurso -> combustible y litros por item (un bidon son 20 L).
+combustibles-de-recursos:
+  gasolina: {combustible: gasolina, litros: 20}
+  diesel: {combustible: diesel, litros: 20}
+  carbon_crudo: {combustible: carbon, litros: 5}
+
+# Reglas del taladro (para todos los tipos con "clase: taladro").
+taladro:
+  # Unidades de carbon que se intentan sacar de la veta por cada bloque de
+  # carbon perforado, antes del bonus-rendimiento del tier.
+  produccion-base: 8.0
+  # Ticks de perforacion por punto de dureza del bloque (piedra = 1.5,
+  # deepslate = 3). Se divide por la "potencia" del tier.
+  ticks-por-dureza: 4.0
+  # Combustible que gasta cada bloque perforado.
+  consumo-por-bloque: 1.0
+  # Si hay agua o lava pegada al frente, frena en vez de abrirle paso.
+  frenar-ante-liquidos: true
+  # Bloques que nunca rompe, ademas de los que tienen contenido (cofres,
+  # hornos, carteles...) y los irrompibles.
+  lista-negra: [OBSIDIAN, CRYING_OBSIDIAN, REINFORCED_DEEPSLATE, END_PORTAL_FRAME, BUDDING_AMETHYST]
+  # Que da cada bloque perforado. "veta: true" saca carbon de la veta del
+  # chunk (suma carbon crudo a la empresa y xp-por-unidad de XP). "dinero" va
+  # al balance de la empresa y "xp" a su XP; ambos por (1 + bonus-rendimiento).
+  recompensas:
+    default:
+      dinero: 0
+      xp: 0.05
+    COAL_ORE:
+      veta: true
+      xp-por-unidad: 0.5
+    DEEPSLATE_COAL_ORE:
+      veta: true
+      xp-por-unidad: 0.5
+
+# ------------------------------------------------------------------
+# Tipos de vehiculo
+# ------------------------------------------------------------------
+# clase:      terrestre (ruedas) o taladro (orugas, perfora; solo anda dentro
+#             del territorio de su empresa)
+# modelo:     camion, camioneta o taladro (la forma); los colores van en
+#             "colores". Con "item-model" (por ejemplo "minercorp:camion") se
+#             dibuja con un modelo de resource pack en vez de bloques.
+# dueno:      jugador (lo paga y lo maneja el jugador) o empresa (lo paga la
+#             empresa y lo maneja cualquier miembro)
+# nivel-empresa: nivel minimo de empresa para comprarlo (solo dueno empresa)
+# velocidad:  maxima en bloques por tick (0.5 = 10 bloques/s = 36 km/h)
+# aceleracion / frenado: bloques por tick que gana o pierde por tick
+# giro:       grados por tick al doblar a fondo
+# reversa:    fraccion de la velocidad maxima marcha atras
+# tanque:     litros
+# consumo:    litros por bloque recorrido
+# velocidad-sin-combustible: fraccion de la maxima sin combustible (0 = no anda)
+# combustibles: ids de combustible que acepta
+# carga:      espacios de carga (multiplo de 9, 0 = sin carga)
+tipos:
+  camioneta:
+    nombre: "Camioneta"
+    descripcion: ["Rapida y economica.", "Caja chica para herramientas y mineral."]
+    clase: terrestre
+    modelo: camioneta
+    dueno: jugador
+    precio: 900
+    icono: MINECART
+    velocidad: 0.6
+    aceleracion: 0.012
+    frenado: 0.04
+    giro: 5.0
+    reversa: 0.35
+    tanque: 60
+    consumo: 0.04
+    velocidad-sin-combustible: 0
+    combustibles: [gasolina, diesel, carbon]
+    carga: 9
+    colores:
+      carroceria: RED_CONCRETE
+      techo: WHITE_CONCRETE
+      bajo: LIGHT_GRAY_CONCRETE
+      detalle: IRON_BLOCK
+      caja: STRIPPED_SPRUCE_WOOD
+      vidrio: LIGHT_GRAY_STAINED_GLASS
+
+  camion:
+    nombre: "Camion de carga"
+    descripcion: ["Lento pero lleva mucho.", "Dos asientos y caja con lona."]
+    clase: terrestre
+    modelo: camion
+    dueno: jugador
+    precio: 3500
+    icono: CHEST_MINECART
+    velocidad: 0.45
+    aceleracion: 0.006
+    frenado: 0.025
+    giro: 3.5
+    reversa: 0.3
+    tanque: 150
+    consumo: 0.08
+    velocidad-sin-combustible: 0
+    combustibles: [diesel, gasolina, carbon]
+    carga: 27
+    colores:
+      cabina: LIGHT_BLUE_TERRACOTTA
+      lona: RED_WOOL
+      franja: WHITE_CONCRETE
+      chasis: GRAY_CONCRETE
+      detalle: LIGHT_GRAY_CONCRETE
+      caja: STRIPPED_SPRUCE_WOOD
+      vidrio: LIGHT_GRAY_STAINED_GLASS
+
+  taladro-1:
+    nombre: "Taladro Basico"
+    descripcion: ["Perfora tuneles de 2x2", "en el territorio de tu empresa."]
+    clase: taladro
+    modelo: taladro
+    dueno: empresa
+    nivel-empresa: 1
+    precio: 150
+    icono: IRON_PICKAXE
+    velocidad: 0.15
+    giro: 4.0
+    reversa: 0.5
+    tanque: 100
+    consumo: 0
+    velocidad-sin-combustible: 0.4
+    combustibles: [carbon, diesel]
+    carga: 0
+    # ancho/alto: tamano del tunel. profundidad: bloques hacia adelante de
+    # una vez. potencia: divide el tiempo de perforacion.
+    perforacion:
+      ancho: 2
+      alto: 2
+      profundidad: 1
+      potencia: 1.0
+      bonus-rendimiento: 0.0
+    colores:
+      cuerpo: YELLOW_CONCRETE
+      punta: IRON_BLOCK
+      detalle: GRAY_CONCRETE
+      oruga: BLACK_CONCRETE
+      vidrio: LIGHT_GRAY_STAINED_GLASS
+
+  taladro-2:
+    nombre: "Taladro Avanzado"
+    descripcion: ["Tunel de 3x3 y mas potencia."]
+    clase: taladro
+    modelo: taladro
+    dueno: empresa
+    nivel-empresa: 3
+    precio: 500
+    icono: DIAMOND_PICKAXE
+    velocidad: 0.22
+    giro: 5.0
+    reversa: 0.5
+    tanque: 250
+    consumo: 0
+    velocidad-sin-combustible: 0.4
+    combustibles: [carbon, diesel]
+    carga: 0
+    perforacion:
+      ancho: 3
+      alto: 3
+      profundidad: 1
+      potencia: 1.6
+      bonus-rendimiento: 0.25
+    colores:
+      cuerpo: WAXED_CUT_COPPER
+      punta: GOLD_BLOCK
+      detalle: WAXED_COPPER_BLOCK
+      oruga: BLACK_CONCRETE
+      vidrio: LIGHT_BLUE_STAINED_GLASS
+
+  taladro-3:
+    nombre: "Taladro Industrial"
+    descripcion: ["Tunel de 5x4, perfora 2 de fondo."]
+    clase: taladro
+    modelo: taladro
+    dueno: empresa
+    nivel-empresa: 6
+    precio: 1500
+    icono: NETHERITE_PICKAXE
+    velocidad: 0.3
+    giro: 6.0
+    reversa: 0.5
+    tanque: 600
+    consumo: 0
+    velocidad-sin-combustible: 0.4
+    combustibles: [carbon, diesel]
+    carga: 0
+    perforacion:
+      ancho: 5
+      alto: 4
+      profundidad: 2
+      potencia: 2.5
+      bonus-rendimiento: 0.5
+    colores:
+      cuerpo: NETHERITE_BLOCK
+      punta: DIAMOND_BLOCK
+      detalle: POLISHED_BLACKSTONE
+      oruga: BLACKSTONE
+      vidrio: TINTED_GLASS

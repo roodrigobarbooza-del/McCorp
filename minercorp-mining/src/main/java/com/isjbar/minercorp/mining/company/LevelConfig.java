@@ -31,10 +31,6 @@ public class LevelConfig {
         return valorDeLista("niveles.minions-por-nivel", nivel, 0);
     }
 
-    public int tierMaximoDeTaladro(int nivel) {
-        return valorDeLista("niveles.taladro-tier-maximo-por-nivel", nivel, 1);
-    }
-
     private int valorDeLista(String path, int nivel, int fallback) {
         List<Integer> lista = config.getIntegerList(path);
         int idx = nivel - 1;

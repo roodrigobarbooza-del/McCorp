@@ -6,7 +6,6 @@ import com.isjbar.minercorp.mining.company.Company;
 import com.isjbar.minercorp.mining.company.CompanyManager;
 import com.isjbar.minercorp.mining.company.RawCoalItems;
 import com.isjbar.minercorp.mining.minion.MinionManager;
-import com.isjbar.minercorp.mining.vehicle.DrillVehicleManager;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -81,8 +80,10 @@ public class MenuListener implements Listener {
         }
         Company company = companyOpt.get();
 
-        if (action.equals(MenuActions.TALADRO_MENU)) {
-            MinerCorpMenu.openTaladroSubmenu(plugin, player, company);
+        if (action.equals(MenuActions.GARAJE)) {
+            // El garaje es de MinerCorp-Vehicles: se abre con su comando para no depender de ese plugin.
+            player.closeInventory();
+            player.performCommand("garaje");
             return;
         }
         if (action.equals(MenuActions.INFO)) {
@@ -112,17 +113,6 @@ public class MenuListener implements Listener {
             venderTodo(player, company, true);
             MinerCorpMenu.open(plugin, player);
             return;
-        }
-        if (action.startsWith(MenuActions.TALADRO_SACAR_PREFIX)) {
-            int index = Integer.parseInt(action.substring(MenuActions.TALADRO_SACAR_PREFIX.length()));
-            sacarTaladro(player, company, index);
-            MinerCorpMenu.openTaladroSubmenu(plugin, player, company);
-            return;
-        }
-        if (action.startsWith(MenuActions.TALADRO_TIER_PREFIX)) {
-            int tier = Integer.parseInt(action.substring(MenuActions.TALADRO_TIER_PREFIX.length()));
-            comprarTaladro(player, company, tier);
-            MinerCorpMenu.openTaladroSubmenu(plugin, player, company);
         }
     }
 
@@ -202,33 +192,6 @@ public class MenuListener implements Listener {
                 Reason.of(Reason.VENTA, round(cantidad) + " de carbon " + (refinado ? "refinado" : "crudo")));
         plugin.companies().save();
         msg(player, NamedTextColor.GREEN, "Vendiste " + round(cantidad) + " de carbon " + (refinado ? "refinado" : "crudo") + " por " + round(total) + ".");
-    }
-
-    private void sacarTaladro(Player player, Company company, int index) {
-        switch (plugin.vehicles().deploy(company, index, player.getLocation())) {
-            case OK -> msg(player, NamedTextColor.GREEN, "Sacaste el taladro del garaje. Subite con click derecho.");
-            case FUERA_DE_TERRITORIO -> msg(player, NamedTextColor.RED, "Debes estar parado dentro de un territorio reclamado por tu empresa.");
-            default -> msg(player, NamedTextColor.RED, "Ese taladro ya no esta en el garaje.");
-        }
-    }
-
-    private void comprarTaladro(Player player, Company company, int tier) {
-        if (!plugin.obras().sedeLista(company)) {
-            msg(player, NamedTextColor.RED, "Primero termina la obra de la sede de tu empresa (/empresa obra).");
-            return;
-        }
-        int maxTier = plugin.levels().tierMaximoDeTaladro(company.getLevel());
-        if (tier > maxTier) {
-            msg(player, NamedTextColor.RED, "Tu empresa (nivel " + company.getLevel() + ") solo puede comprar hasta el tier " + maxTier + ".");
-            return;
-        }
-        DrillVehicleManager.PlacementResult result = plugin.vehicles().spawn(company, tier, player.getLocation());
-        switch (result) {
-            case OK -> msg(player, NamedTextColor.GREEN, "Taladro comprado y colocado. Cargale carbon y subite con click derecho.");
-            case TIER_INVALIDO -> msg(player, NamedTextColor.RED, "Ese tier no existe.");
-            case FUERA_DE_TERRITORIO -> msg(player, NamedTextColor.RED, "Debes estar parado dentro de un territorio reclamado por tu empresa.");
-            case SIN_SALDO -> msg(player, NamedTextColor.RED, "La empresa no tiene saldo suficiente para ese taladro.");
-        }
     }
 
     private double round(double value) {

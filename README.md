@@ -45,6 +45,7 @@ Esto genera 4 jars (uno por modulo):
 minercorp-territory/target/MinerCorp-Territory-1.0.0.jar
 minercorp-economy/target/MinerCorp-Economy-1.0.0.jar
 minercorp-mining/target/MinerCorp-Mining-1.0.0.jar
+minercorp-vehicles/target/MinerCorp-Vehicles-1.0.0.jar
 minercorp-gransede/target/MinerCorp-GranSede-1.0.0.jar
 ```
 
@@ -58,64 +59,62 @@ Mining se deshabilita solo si no encuentra las otras dos APIs registradas.
 No hay dependencias externas de pago ni de terceros (ni Vault, ni
 ItemsAdder): todo corre con Paper/Spigot vanilla.
 
-## El taladro-vehiculo
+## Vehiculos (MinerCorp-Vehicles)
 
-Es un **vehiculo propio que mueve el servidor**, armado con entidades
-vanilla (sin resourcepack ni plugins de terceros):
+Los vehiculos tienen su propio plugin, `MinerCorp-Vehicles` (depende de
+Territory, Economy y Mining). Son **vehiculos que mueve el servidor**,
+dibujados con display entities y bloques vanilla, sin resourcepack:
 
-- una raiz invisible (`BlockDisplay` sin bloque) donde va sentado el jugador
-  y que guarda empresa, tier y combustible en su PDC;
-- la carroceria `DrillModel` (chasis, orugas, motor, parabrisas, faros y una
-  punta conica que gira al perforar), con colores por tier configurables en
-  `taladros.tier-N.modelo`;
-- un `Interaction` invisible para poder hacerle click derecho.
+- **Camioneta**: pickup chica de dos tonos con baca, rapida, 9 espacios de carga.
+- **Camion de carga**: cabina adelantada con caja de lona, 2 asientos, 27 espacios.
+- **Taladro** (3 tiers): el de siempre, de la empresa, perfora tuneles en su territorio.
 
-Antes era un bote vanilla, pero un bote con jugador arriba lo mueve el
-cliente: `setMaxSpeed`/`setWorkOnLand` no tenian efecto real, en tierra
-andaba lentisimo y todos los tiers iban igual.
+Todo se configura en `plugins/MinerCorp-Vehicles/config.yml` (precio,
+velocidad, aceleracion, giro, tanque, consumo, combustibles, carga y colores
+de cada tipo). Con `item-model` un tipo se dibuja con un modelo de
+resourcepack en vez de bloques.
 
 ### Como se usa
 
-1. `/empresa taladro comprar <tier>` parado dentro de tu territorio.
-2. Cargale combustible: click derecho al taladro con carbon, carbon vegetal o
-   bloque de carbon en la mano, o `/empresa taladro cargar [cantidad]` para
-   usar carbon crudo de la empresa.
-3. Click derecho con cualquier otra cosa para subirte.
-4. Controles: **W/S** avanzar y retroceder, **A/D** girar, **Espacio**
-   frenar, **Shift** bajarse. Arriba ves una barra con el combustible y el
-   carbon que sacaste en el viaje.
+1. Se compran en la Gran Sede: el resto en la concesionaria, los taladros en
+   la tienda de taladros (tambien con `/vehiculo tienda`). Van al garaje: los de jugador los paga el jugador, el
+   taladro lo paga la empresa (con nivel minimo y la sede terminada).
+2. `/garaje` (o el boton Garaje del `/empresa menu`) para sacarlos delante
+   tuyo. El menu tambien muestra donde quedaron los que estan afuera.
+3. Click derecho con combustible en la mano para cargarlo: carbon, o con
+   MinerCorp-Recursos los bidones de gasolina y diesel y el carbon crudo.
+   `/vehiculo cargar [cantidad]` usa carbon crudo de la empresa.
+4. Click derecho para subirte: al volante si es tuyo, si no de acompanante.
+   Shift + click derecho abre la carga. Golpearlo lo guarda en el garaje.
+5. Controles: **W** acelerar, **S** frenar y reversa, **A/D** doblar (las
+   ruedas solo doblan andando; el taladro gira en el lugar), **Espacio**
+   freno de mano, **Shift** bajarse. La barra de arriba muestra velocidad y
+   combustible.
 
-### Como perfora
+### Fisica
+
+Se apoya en dos puntos (adelante y atras) que siguen el terreno: sube
+escalones de un bloque, baja de a un bloque y se inclina en las subidas. No
+atraviesa paredes ni al doblar, no entra al agua y cae si no hay piso.
+
+### El taladro
 
 - Mientras apretas W, perfora una caja de `ancho` x `alto` x `profundidad`
-  delante del vehiculo (por tier en `config.yml`). El piso donde esta apoyado
-  nunca se rompe, asi que el tunel sale derecho y no se hunde.
-- Cada bloque tarda segun su dureza (`ticks-por-dureza`, dividido por la
-  `potencia` del tier) y gasta `combustible.por-bloque`. Sin combustible se
-  puede manejar despacio pero no perfora.
-- No rompe: bloques irrompibles, los de `lista-negra`, nada con inventario
-  o datos (cofres, hornos, spawners, carteles...), nada fuera de tu
-  territorio, ni bloques pegados a agua o lava (`frenar-ante-liquidos`). En
-  esos casos frena y te avisa en la barra de accion.
-- No puede salir del territorio de tu empresa.
-- Recompensas por bloque en `taladros.recompensas`: el carbon sale de la
-  veta del chunk como antes (si la veta esta agotada, el bloque se rompe
-  igual sin recompensa); el resto da una XP chica de empresa por defecto.
-- Empresas y vetas se guardan cada `guardado-segundos`, no por bloque.
+  delante (tipos `taladro-N.perforacion`). El piso nunca se rompe.
+- Cada bloque tarda segun su dureza (`taladro.ticks-por-dureza`, dividido
+  por la `potencia`) y gasta `taladro.consumo-por-bloque`.
+- No rompe irrompibles, `lista-negra`, nada con inventario, nada fuera del
+  territorio, ni bloques pegados a agua o lava. No puede salir del territorio.
+- Recompensas en `taladro.recompensas` (el carbon sale de la veta del chunk).
 
-### Notas
+### Migracion desde la version anterior
 
-- Golpear el taladro (click izquierdo) lo guarda en el garaje de la empresa,
-  con su combustible. Se vuelve a sacar sin pagar desde `/empresa menu` >
-  Taladro-vehiculo (ultima fila) o con `/empresa taladro sacar`.
-- Los taladros-bote de la version anterior se convierten solos al vehiculo
-  nuevo (misma empresa y tier, tanque vacio) cuando se carga su chunk.
-- Si la raiz se borra con `/kill`, la carroceria y el asiento quedan sueltos:
-  `/empresa taladro quitar` cerca de ellos los limpia.
-- La altura del asiento se ajusta con `taladros.efectos.altura-asiento`.
-- Al arrancar, el plugin completa tu `config.yml` con las claves nuevas que
-  falten. Si todavia tenia la seccion `taladros:` del taladro-bote (con
-  `radio`), la reemplaza entera por la nueva y lo avisa en la consola.
+Al instalar el plugin nuevo, los taladros que habia en el mundo se rearman
+solos (misma empresa, tier y combustible) cuando se carga su chunk, y los
+que estaban guardados en el garaje de la empresa pasan al garaje nuevo. La
+seccion `taladros` del config de Mining se borra; los tiers ahora son los
+tipos `taladro-1/2/3` de Vehicles. `/vehiculo limpiar` (admin) borra restos
+sueltos cerca.
 
 ## La Gran Sede
 
@@ -161,11 +160,6 @@ muestra el precio.
 /empresa liberar
 /empresa invitar|aceptar|rechazar|expulsar|salir
 /empresa disolver
-/empresa taladro comprar <tier>        (parado dentro de tu territorio)
-/empresa taladro cargar [cantidad]     (combustible con carbon crudo de la empresa)
-/empresa taladro guardar               (guarda el taladro cercano en el garaje de la empresa)
-/empresa taladro sacar [numero]        (saca un taladro del garaje, parado en tu territorio)
-/empresa taladro quitar                (desarma el taladro mas cercano)
 /empresa minion <colocar|quitar|lista>
 /empresa carbon <cantidad|todo>        (saca carbon crudo como items para el Horno de coque)
 /empresa vender <crudo|refinado> <cantidad>
@@ -179,6 +173,18 @@ muestra el precio.
 /eco dar|quitar|fijar <cuenta> <monto> (admin - minercorp.economy.admin)
 /eco ver <cuenta> | stats | recargar   (admin)
 /empresa darcarbon <cantidad>          (admin - suma carbon crudo a tu empresa, para testear el taladro)
+```
+
+## Comandos de vehiculos (`/vehiculo`, alias `/veh`)
+
+```
+/garaje                                (tus vehiculos y los de tu empresa)
+/vehiculo tienda                       (concesionario por comando, si tienda-por-comando: true)
+/vehiculo guardar                      (guarda el vehiculo cercano)
+/vehiculo cargar [cantidad]            (combustible con carbon crudo de la empresa)
+/vehiculo dar <jugador> <tipo>         (admin)
+/vehiculo limpiar                      (admin - borra restos sueltos cerca)
+/vehiculo recargar                     (admin - relee el config)
 ```
 
 ## Economia

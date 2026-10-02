@@ -1,4 +1,4 @@
-package com.isjbar.minercorp.mining.vehicle;
+package com.isjbar.minercorp.vehicles.vehicle;
 
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -7,7 +7,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import java.util.EnumMap;
 import java.util.Map;
 
-/** Tabla de recompensas por bloque perforado (taladros.recompensas en config.yml). */
+/** Tabla de recompensas por bloque perforado (taladro.recompensas en config.yml). */
 public final class DrillRewards {
 
     /**
@@ -36,14 +36,14 @@ public final class DrillRewards {
     }
 
     public static DrillRewards load(FileConfiguration config, java.util.logging.Logger logger) {
-        ConfigurationSection root = config.getConfigurationSection("taladros.recompensas");
+        ConfigurationSection root = config.getConfigurationSection("taladro.recompensas");
         DrillRewards rewards = new DrillRewards(Reward.load(root == null ? null : root.getConfigurationSection("default")));
         if (root == null) return rewards;
         for (String key : root.getKeys(false)) {
             if (key.equalsIgnoreCase("default")) continue;
             Material material = Material.matchMaterial(key);
             if (material == null) {
-                logger.warning("taladros.recompensas: material desconocido '" + key + "', se ignora.");
+                logger.warning("taladro.recompensas: material desconocido '" + key + "', se ignora.");
                 continue;
             }
             rewards.porMaterial.put(material, Reward.load(root.getConfigurationSection(key)));

@@ -8,8 +8,6 @@ import com.isjbar.minercorp.mining.gui.MenuListener;
 import com.isjbar.minercorp.mining.minion.MinionManager;
 import com.isjbar.minercorp.mining.sede.ObraListener;
 import com.isjbar.minercorp.mining.sede.ObraManager;
-import com.isjbar.minercorp.mining.vehicle.DrillVehicleListener;
-import com.isjbar.minercorp.mining.vehicle.DrillVehicleManager;
 import com.isjbar.minercorp.resources.api.ResourcesAPI;
 import com.isjbar.minercorp.territory.api.TerritoryAPI;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -20,7 +18,6 @@ public class MiningPlugin extends JavaPlugin {
     private CompanyManager companyManager;
     private LevelConfig levelConfig;
     private MinionManager minionManager;
-    private DrillVehicleManager vehicleManager;
     private ObraManager obraManager;
     private TerritoryAPI territoryAPI;
     private EconomyAPI economyAPI;
@@ -42,10 +39,8 @@ public class MiningPlugin extends JavaPlugin {
         this.levelConfig = new LevelConfig(getConfig());
         this.companyManager = new CompanyManager(this, territoryAPI);
         this.minionManager = new MinionManager(this, territoryAPI, economyAPI);
-        this.vehicleManager = new DrillVehicleManager(this, territoryAPI, economyAPI);
         this.obraManager = new ObraManager(this, territoryAPI);
 
-        getServer().getPluginManager().registerEvents(new DrillVehicleListener(this, vehicleManager), this);
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         getServer().getPluginManager().registerEvents(new ObraListener(this, obraManager), this);
 
@@ -54,7 +49,6 @@ public class MiningPlugin extends JavaPlugin {
         getCommand("empresa").setTabCompleter(empresaCommand);
 
         minionManager.start();
-        vehicleManager.start();
         obraManager.start();
 
         getLogger().info("MinerCorp-Mining habilitado - " + companyManager.all().size() + " empresas cargadas.");
@@ -63,7 +57,6 @@ public class MiningPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (minionManager != null) minionManager.stop();
-        if (vehicleManager != null) vehicleManager.stop();
         if (obraManager != null) obraManager.stop();
         if (companyManager != null) companyManager.save();
     }
@@ -71,18 +64,16 @@ public class MiningPlugin extends JavaPlugin {
     /**
      * Completa el config.yml del server con las claves nuevas del plugin. Bukkit
      * no lo hace solo: si una seccion falta en el archivo, getConfigurationSection
-     * devuelve una seccion vacia en vez de la del jar, y por eso con un config
-     * viejo el taladro no reconocia el carbon como combustible.
+     * devuelve una seccion vacia en vez de la del jar.
      *
-     * La seccion "taladros" del taladro-bote anterior (tiers con "radio" y una
-     * "velocidad" pensada para botes) se reemplaza entera por la nueva.
+     * La seccion "taladros" se saca: los taladros ahora son de MinerCorp-Vehicles
+     * y se configuran en su config.yml (tipos taladro-1, taladro-2, taladro-3).
      */
     private void actualizarConfig() {
-        boolean taladroViejo = getConfig().isSet("taladros.intervalo-ticks")
-                || getConfig().isSet("taladros.tier-1.radio");
-        if (taladroViejo) {
+        if (getConfig().isSet("taladros") || getConfig().isSet("niveles.taladro-tier-maximo-por-nivel")) {
             getConfig().set("taladros", null);
-            getLogger().warning("config.yml tenia la seccion 'taladros' del taladro-bote anterior: se reemplazo por la nueva.");
+            getConfig().set("niveles.taladro-tier-maximo-por-nivel", null);
+            getLogger().warning("config.yml tenia la seccion 'taladros': ahora los taladros se configuran en MinerCorp-Vehicles.");
         }
         getConfig().options().copyDefaults(true);
         saveConfig();
@@ -115,10 +106,6 @@ public class MiningPlugin extends JavaPlugin {
 
     public ObraManager obras() {
         return obraManager;
-    }
-
-    public DrillVehicleManager vehicles() {
-        return vehicleManager;
     }
 
     /**
