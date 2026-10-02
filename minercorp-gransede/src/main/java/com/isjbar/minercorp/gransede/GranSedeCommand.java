@@ -29,6 +29,7 @@ import java.util.UUID;
  * /gransede pos1 | pos2             -> esquinas para la proxima zona
  * /gransede zona crear <nombre> <SEDE|MINA|BOSQUE>
  * /gransede zona borrar <nombre> | lista | spawn
+ * /gransede construir [confirmar|cancelar|estado] -> la Gran Sede la construye el plugin
  * /gransede npc crear <tienda> | borrar
  * /gransede tienda <id>             -> abrir una tienda sin vendedor (probar)
  * /gransede recargar
@@ -62,6 +63,9 @@ public class GranSedeCommand implements TabExecutor {
             case "npc" -> {
                 if (admin(sender, admin)) npc(sender, args);
             }
+            case "construir" -> {
+                if (admin(sender, admin)) construir(sender, args);
+            }
             case "tienda" -> {
                 if (!admin(sender, admin) || !(sender instanceof Player p)) return true;
                 if (args.length < 2) return error(sender, "Uso: /gransede tienda <id>");
@@ -88,7 +92,7 @@ public class GranSedeCommand implements TabExecutor {
             sender.sendMessage(Component.text("/gransede ir para ir.", NamedTextColor.YELLOW));
         }
         if (admin) {
-            sender.sendMessage(Component.text("Admin: pos1, pos2, zona crear|borrar|lista|spawn, npc crear|borrar, tienda, recargar", NamedTextColor.DARK_GRAY));
+            sender.sendMessage(Component.text("Admin: construir, pos1, pos2, zona crear|borrar|lista|spawn, npc crear|borrar, tienda, recargar", NamedTextColor.DARK_GRAY));
         }
     }
 
@@ -161,6 +165,38 @@ public class GranSedeCommand implements TabExecutor {
         }
     }
 
+    private void construir(CommandSender sender, String[] args) {
+        var obras = plugin.obras();
+        String accion = args.length < 2 ? "" : args[1].toLowerCase(Locale.ROOT);
+        switch (accion) {
+            case "confirmar" -> {
+                if (!(sender instanceof Player p)) return;
+                String err = obras.confirmar(p);
+                if (err != null) error(sender, err);
+            }
+            case "cancelar" -> {
+                if (obras.cancelar()) ok(sender, "Obra de la Gran Sede frenada. Lo construido queda en pie.");
+                else error(sender, "No hay ninguna obra de la Gran Sede en curso.");
+            }
+            case "estado" -> obras.obra().ifPresentOrElse(
+                    o -> ok(sender, "Obra de la Gran Sede en " + o.world() + " " + o.ax() + ", " + o.ay() + ", " + o.az()
+                            + ": " + (o.fase() == com.isjbar.minercorp.gransede.obra.ObraGranSede.Fase.DESPEJE ? "despejando" : "construyendo")
+                            + " " + obras.porcentaje() + "%."),
+                    () -> sender.sendMessage(Component.text("No hay obra en curso.", NamedTextColor.GRAY)));
+            default -> {
+                if (!(sender instanceof Player p)) return;
+                if (obras.obra().isPresent()) {
+                    error(sender, "Ya hay una obra en curso: /gransede construir estado o cancelar.");
+                    return;
+                }
+                p.getInventory().addItem(obras.crearPlano()).values()
+                        .forEach(sobra -> p.getWorld().dropItemNaturally(p.getLocation(), sobra));
+                ok(sender, "Te di el Plano de la Gran Sede (" + obras.plano().ancho() + " x " + obras.plano().fondo()
+                        + "). Tenelo en la mano, mira al suelo donde va el centro y hace clic derecho.");
+            }
+        }
+    }
+
     private void npc(CommandSender sender, String[] args) {
         if (!(sender instanceof Player p)) return;
         String accion = args.length < 2 ? "" : args[1].toLowerCase(Locale.ROOT);
@@ -199,10 +235,11 @@ public class GranSedeCommand implements TabExecutor {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         boolean admin = sender.hasPermission(ZonaProteccionListener.PERMISO_ADMIN);
         List<String> opciones = switch (args.length) {
-            case 1 -> admin ? List.of("ir", "pos1", "pos2", "zona", "npc", "tienda", "recargar") : List.of("ir");
+            case 1 -> admin ? List.of("ir", "construir", "pos1", "pos2", "zona", "npc", "tienda", "recargar") : List.of("ir");
             case 2 -> !admin ? List.of() : switch (args[0].toLowerCase(Locale.ROOT)) {
                 case "zona" -> List.of("crear", "borrar", "lista", "spawn");
                 case "npc" -> List.of("crear", "borrar");
+                case "construir" -> List.of("confirmar", "cancelar", "estado");
                 case "tienda" -> idsTiendas();
                 default -> List.of();
             };
