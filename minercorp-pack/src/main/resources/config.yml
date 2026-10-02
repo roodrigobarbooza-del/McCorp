@@ -7,15 +7,18 @@
 # cada jugador cuando entra.
 #
 # modo:
-#   propio  -> (recomendado) el plugin trae el pack adentro y lo sirve con un
-#              mini servidor web en "puerto". No hay que subir nada a ningun
-#              lado. Si juegan desde afuera de tu casa, abri ese puerto en el
-#              router igual que el 25565 (TCP).
-#   url     -> los jugadores lo bajan de "url.direccion" (un link directo al
-#              .zip, por ejemplo de un release de GitHub). Si "url.sha1" esta
-#              vacio, el plugin baja el zip una vez al arrancar y lo calcula.
+#   url     -> (recomendado) los jugadores bajan el pack de "url.direccion".
+#              Por defecto es el link que GitHub Actions actualiza solo en cada
+#              cambio de main, asi que no hay que abrir puertos ni subir nada.
+#              Funciona tambien entrando por tuneles (SquidServers, playit...).
+#              Si "url.sha1" esta vacio, el plugin baja el zip al arrancar y
+#              lo calcula solo.
+#   propio  -> el plugin sirve el pack que trae adentro con un mini servidor
+#              web en "propio.puerto". Solo sirve si los jugadores llegan a ese
+#              puerto: misma PC, red de casa, o el puerto abierto en el router.
+#              NO pasa por tuneles como SquidServers.
 #   apagado -> no se manda pack y los items se ven como items vanilla.
-modo: propio
+modo: url
 
 # true: quien rechaza el pack no puede entrar (asi nadie ve cubos violetas).
 obligatorio: true
@@ -32,5 +35,8 @@ propio:
   archivo: ""
 
 url:
-  direccion: ""
+  direccion: "https://github.com/roodrigobarbooza-del/McCorp/releases/download/resourcepack/mccorp-pack.zip"
   sha1: ""
+
+# No tocar: sirve para actualizar configs viejos solo.
+config-version: 2
