@@ -91,16 +91,26 @@ Como agregar modelos: [resourcepack/LEEME.md](resourcepack/LEEME.md).
 
 Los vehiculos tienen su propio plugin, `MinerCorp-Vehicles` (depende de
 Territory, Economy y Mining). Son **vehiculos que mueve el servidor**,
-dibujados con display entities y bloques vanilla, sin resourcepack:
+dibujados con display entities:
 
-- **Camioneta**: pickup chica de dos tonos con baca, rapida, 9 espacios de carga.
-- **Camion de carga**: cabina adelantada con caja de lona, 2 asientos, 27 espacios.
-- **Taladro** (3 tiers): el de siempre, de la empresa, perfora tuneles en su territorio.
+- **Camioneta**: Trabant de dos tonos con baca, rapida, 9 espacios de carga
+  (con bloques es una pickup chica).
+- **Camion de carga**: IFA W50, cabina adelantada celeste con caja de lona
+  roja, 2 asientos, 27 espacios.
+- **Taladro** (3 tiers): perforadora sobre orugas de la empresa, perfora
+  tuneles de 3x3 a 5x5 en su territorio. Tiene el **panel de control aparte**,
+  en un pedestal detras: click derecho ahi abre su menu (manejar, cargar
+  combustible del inventario o de la empresa, guardar).
+
+Con **MinerCorp-Pack** instalado se dibujan con los modelos 3D del resource
+pack (ruedas que giran y doblan, punta que gira); sin el, con bloques
+vanilla (`resource-pack.usar` en el config: auto, true o false). Los modelos
+los genera `python3 tools/vehicles-pack/generar.py` (con `--vista carpeta`
+dibuja una imagen de cada uno para revisarlos sin abrir el juego).
 
 Todo se configura en `plugins/MinerCorp-Vehicles/config.yml` (precio,
 velocidad, aceleracion, giro, tanque, consumo, combustibles, carga y colores
-de cada tipo). Con `item-model` un tipo se dibuja con un modelo de
-resourcepack en vez de bloques.
+de cada tipo).
 
 ### Como se usa
 
@@ -128,7 +138,8 @@ atraviesa paredes ni al doblar, no entra al agua y cae si no hay piso.
 ### El taladro
 
 - Mientras apretas W, perfora una caja de `ancho` x `alto` x `profundidad`
-  delante (tipos `taladro-N.perforacion`). El piso nunca se rompe.
+  delante (tipos `taladro-N.perforacion`, minimo 3x3 porque es lo que mide
+  el taladro). El piso nunca se rompe.
 - Cada bloque tarda segun su dureza (`taladro.ticks-por-dureza`, dividido
   por la `potencia`) y gasta `taladro.consumo-por-bloque`.
 - No rompe irrompibles, `lista-negra`, nada con inventario, nada fuera del

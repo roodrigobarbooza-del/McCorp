@@ -25,6 +25,19 @@ tienda-gran-sede:
   vehiculos: concesionaria
   taladros: taladros
 
+# Modelos 3D del resource pack de McCorp (camion IFA, camioneta Trabant,
+# taladro con panel aparte), mas grandes y parecidos a las fotos.
+#   auto  -> se usan si MinerCorp-Pack esta instalado y mandando el pack
+#   true  -> siempre (sin el pack se verian cubos violetas)
+#   false -> siempre con bloques vanilla
+# Al cambiarlo y hacer /vehiculo recargar, los vehiculos estacionados se
+# vuelven a armar solos.
+resource-pack:
+  usar: auto
+  # Si en el juego los vehiculos con pack aparecen mirando para atras
+  # (andan de cola), poner en true.
+  girar-180: false
+
 # Cada cuantos segundos se guardan garajes y empresas mientras se maneja.
 guardado-segundos: 30
 
@@ -94,8 +107,10 @@ taladro:
 # clase:      terrestre (ruedas) o taladro (orugas, perfora; solo anda dentro
 #             del territorio de su empresa)
 # modelo:     camion, camioneta o taladro (la forma); los colores van en
-#             "colores". Con "item-model" (por ejemplo "minercorp:camion") se
-#             dibuja con un modelo de resource pack en vez de bloques.
+#             "colores" (solo con bloques). Con resource-pack.usar se usan
+#             los modelos del pack. "item-model" (por ejemplo
+#             "mccorp:vehicles/camion") fuerza un unico modelo propio para
+#             ese tipo, sin ruedas animadas.
 # dueno:      jugador (lo paga y lo maneja el jugador) o empresa (lo paga la
 #             empresa y lo maneja cualquier miembro)
 # nivel-empresa: nivel minimo de empresa para comprarlo (solo dueno empresa)
@@ -164,7 +179,7 @@ tipos:
 
   taladro-1:
     nombre: "Taladro Basico"
-    descripcion: ["Perfora tuneles de 2x2", "en el territorio de tu empresa."]
+    descripcion: ["Perfora tuneles de 3x3", "en el territorio de tu empresa."]
     clase: taladro
     modelo: taladro
     dueno: empresa
@@ -179,11 +194,12 @@ tipos:
     velocidad-sin-combustible: 0.4
     combustibles: [carbon, diesel]
     carga: 0
-    # ancho/alto: tamano del tunel. profundidad: bloques hacia adelante de
-    # una vez. potencia: divide el tiempo de perforacion.
+    # ancho/alto: tamano del tunel (minimo 3x3, lo que mide el taladro).
+    # profundidad: bloques hacia adelante de una vez. potencia: divide el
+    # tiempo de perforacion.
     perforacion:
-      ancho: 2
-      alto: 2
+      ancho: 3
+      alto: 3
       profundidad: 1
       potencia: 1.0
       bonus-rendimiento: 0.0
@@ -196,7 +212,7 @@ tipos:
 
   taladro-2:
     nombre: "Taladro Avanzado"
-    descripcion: ["Tunel de 3x3 y mas potencia."]
+    descripcion: ["Tunel de 4x4 y mas potencia."]
     clase: taladro
     modelo: taladro
     dueno: empresa
@@ -212,8 +228,8 @@ tipos:
     combustibles: [carbon, diesel]
     carga: 0
     perforacion:
-      ancho: 3
-      alto: 3
+      ancho: 4
+      alto: 4
       profundidad: 1
       potencia: 1.6
       bonus-rendimiento: 0.25
@@ -226,7 +242,7 @@ tipos:
 
   taladro-3:
     nombre: "Taladro Industrial"
-    descripcion: ["Tunel de 5x4, perfora 2 de fondo."]
+    descripcion: ["Tunel de 5x5, perfora 2 de fondo."]
     clase: taladro
     modelo: taladro
     dueno: empresa
@@ -243,7 +259,7 @@ tipos:
     carga: 0
     perforacion:
       ancho: 5
-      alto: 4
+      alto: 5
       profundidad: 2
       potencia: 2.5
       bonus-rendimiento: 0.5

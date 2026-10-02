@@ -10,25 +10,46 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Las formas de los vehiculos, armadas con cajas de bloques vanilla. Las
- * medidas estan en bloques, en el sistema local de {@link Shape}: +X es la
+ * Las formas de los vehiculos. Cada una existe en dos versiones:
+ * <ul>
+ *   <li><b>bloques</b>: armada con cajas de bloques vanilla (no requiere nada
+ *       del jugador);</li>
+ *   <li><b>pack</b>: modelos 3D del resource pack (tools/vehicles-pack), mas
+ *       grandes y parecidos a las referencias, con las ruedas y la punta como
+ *       modelos aparte para poder animarlas.</li>
+ * </ul>
+ * Las medidas estan en bloques, en el sistema local de {@link Shape}: +X es la
  * izquierda del vehiculo, +Z el frente.
  *
- * Inspiradas en las referencias de Isidro: el camion es de cabina adelantada
- * con caja de lona (tipo IFA), la camioneta es una pickup chica de dos tonos
- * con baca en el techo, y el taladro es el de siempre.
+ * Inspiradas en las referencias de Isidro: el camion es un IFA W50 (cabina
+ * adelantada celeste, caja con lona roja), la camioneta un Trabant de dos
+ * tonos con baca en el techo, y el taladro una perforadora sobre orugas con
+ * el panel de control aparte, atras.
  */
 public final class Shapes {
+
+    /** Subirlo cuando cambian las formas: los vehiculos del mundo se vuelven a armar solos. */
+    private static final int VERSION = 2;
 
     private Shapes() {
     }
 
-    public static Shape get(String id) {
-        return switch (id.toLowerCase(Locale.ROOT)) {
-            case "camion" -> camion();
-            case "taladro" -> taladro();
-            default -> camioneta();
+    /**
+     * @param pack si se dibuja con los modelos del resource pack
+     * @param flip si los modelos del pack se ven al reves (gira todo 180 grados)
+     */
+    public static Shape get(String id, boolean pack, boolean flip) {
+        String key = id.toLowerCase(Locale.ROOT);
+        String signature = key + (pack ? "/pack" + (flip ? "-180" : "") : "/bloques") + "/v" + VERSION;
+        Shape shape = switch (key) {
+            case "camion" -> pack ? camionPack(flip) : camion();
+            case "taladro" -> taladro(pack, flip);
+            default -> pack ? camionetaPack(flip) : camioneta();
         };
+        return new Shape(shape.id(), signature, shape.parts(), shape.wheels(), shape.seats(), shape.halfWidth(),
+                shape.halfLength(), shape.height(), shape.contact(), shape.labelHeight(), shape.exhaust(),
+                shape.interactionWidth(), shape.interactionHeight(), shape.bitAxis(), shape.bitTipZ(),
+                shape.clickRear(), shape.console());
     }
 
     // ------------------------------------------------------------- camion
@@ -130,37 +151,107 @@ public final class Shapes {
         return b.build("camioneta", 1.0, 2.3, 2, 2.0, 2.5f, new Vector3f(-0.7f, 0.35f, -2.55f), 2.0f, 2.0f);
     }
 
+    // ---------------------------------------------------------- pack
+
+    private static Shape camionPack(boolean flip) {
+        Builder b = new Builder();
+        b.item("carroceria", "mccorp:vehicles/camion", new Vector3f(0f, 1.75f, 0.05f), 2.5f, flip);
+        b.wheelModelPair("mccorp:vehicles/rueda_camion", 1.02f, 0.62f, 2.3f, 0.62f, true, flip);
+        b.wheelModelPair("mccorp:vehicles/rueda_camion", 1.02f, 0.62f, -1.9f, 0.62f, false, flip);
+        b.seat(0.6f, 1.7f, 2.5f);
+        b.seat(-0.6f, 1.7f, 2.5f);
+        return b.build("camion", 1.3, 3.55, 4, 2.1, 4.0f, new Vector3f(-1.06f, 3.36f, 1.36f), 2.6f, 3.5f);
+    }
+
+    private static Shape camionetaPack(boolean flip) {
+        Builder b = new Builder();
+        b.item("carroceria", "mccorp:vehicles/camioneta", new Vector3f(0f, 1.1f, 0f), 1.75f, flip);
+        b.wheelModelPair("mccorp:vehicles/rueda_auto", 0.86f, 0.41f, 1.46f, 0.41f, true, flip);
+        b.wheelModelPair("mccorp:vehicles/rueda_auto", 0.86f, 0.41f, -1.51f, 0.41f, false, flip);
+        b.seat(0.42f, 0.65f, -0.05f);
+        b.seat(-0.42f, 0.65f, -0.05f);
+        b.seat(0.42f, 0.65f, -0.85f);
+        b.seat(-0.42f, 0.65f, -0.85f);
+        return b.build("camioneta", 1.0, 2.4, 2, 1.5, 2.6f, new Vector3f(-0.73f, 0.28f, -2.45f), 2.0f, 2.2f);
+    }
+
     // ------------------------------------------------------------ taladro
 
-    /** Eje de la punta conica (x, y) del taladro. */
-    private static final Vector3f BIT_AXIS = new Vector3f(0f, 0.65f, 0f);
-    /** Piezas de la punta: lado, inicio en z, largo en z. De la mas ancha a la mas fina. */
+    /** Eje de la punta (x, y) del taladro. */
+    private static final Vector3f BIT_AXIS = new Vector3f(0f, 1.35f, 0f);
+    /** Piezas de la punta de bloques: lado, inicio en z, largo en z. De la mas ancha a la mas fina. */
     static final float[][] BIT_PIECES = {
-            {0.70f, 1.15f, 0.40f},
-            {0.48f, 1.50f, 0.38f},
-            {0.26f, 1.82f, 0.36f},
+            {1.60f, 1.42f, 0.30f},
+            {1.20f, 1.72f, 0.30f},
+            {0.80f, 2.02f, 0.30f},
+            {0.40f, 2.32f, 0.30f},
     };
+    /** Donde va el centro del modelo de la punta del pack (sobre el eje). */
+    private static final Vector3f BIT_MODEL_CENTER = new Vector3f(0f, 1.35f, 2.02f);
+    /** Base del panel de control, apartado detras del cuerpo. */
+    private static final Vector3f CONSOLE = new Vector3f(0f, 0f, -2.55f);
 
-    private static Shape taladro() {
+    /**
+     * Perforadora sobre orugas de 2.6 x 3 bloques (entra en un tunel de 3x3):
+     * cabina a la izquierda, motor atras, cabezal con la punta adelante y el
+     * panel de control (donde se abre el menu) en un pedestal aparte, atras,
+     * enganchado con una barra.
+     */
+    private static Shape taladro(boolean pack, boolean flip) {
         Builder b = new Builder();
-        b.box("chasis", "cuerpo", Material.YELLOW_CONCRETE, -0.70f, 0.25f, -0.95f, 1.40f, 0.40f, 1.90f);
-        // Orugas a los costados, un poco mas largas que el chasis.
-        b.pair("oruga", "oruga", Material.BLACK_CONCRETE, 0.62f, 0f, -1.05f, 0.30f, 0.45f, 2.10f);
-        // Motor atras: alto horno con la boca hacia atras, se enciende al perforar.
-        b.parts.add(new PartDef("motor", null, Material.BLAST_FURNACE,
-                box(-0.45f, 0.65f, -1.00f, 0.90f, 0.60f, 0.50f), false, PartDef.Kind.MOTOR, 0));
-        b.box("cabina", "vidrio", Material.LIGHT_GRAY_STAINED_GLASS, -0.50f, 0.65f, 0.45f, 1.00f, 0.50f, 0.06f);
-        b.glowPair("faro", Material.SEA_LANTERN, 0.40f, 0.45f, 0.95f, 0.20f, 0.18f, 0.10f);
-        b.box("brida", "detalle", Material.GRAY_CONCRETE, -0.45f, 0.20f, 0.85f, 0.90f, 0.90f, 0.30f);
-        for (int i = 0; i < BIT_PIECES.length; i++) {
-            b.parts.add(new PartDef("punta-" + i, "punta", Material.IRON_BLOCK, bitTransform(i, 0f), false,
-                    PartDef.Kind.BIT, i));
+        if (pack) {
+            b.item("carroceria", "mccorp:vehicles/taladro", new Vector3f(0f, 1.45f, -0.6f), 1.6f, flip);
+            b.parts.add(new PartDef("punta", null, Material.AIR,
+                    itemTransform(BIT_MODEL_CENTER, 1f, flip), false, PartDef.Kind.BIT_MODEL, 0,
+                    "mccorp:vehicles/taladro_punta"));
+        } else {
+            b.pair("oruga", "oruga", Material.BLACK_CONCRETE, 0.86f, 0f, -1.9f, 0.44f, 0.85f, 3.1f);
+            b.pair("guardabarros", "cuerpo", Material.YELLOW_CONCRETE, 0.82f, 0.85f, -1.98f, 0.5f, 0.1f, 3.3f);
+            b.box("chasis", "detalle", Material.GRAY_CONCRETE, -0.86f, 0.3f, -1.95f, 1.72f, 0.65f, 3.15f);
+            b.box("cubierta", "cuerpo", Material.YELLOW_CONCRETE, -1.3f, 0.95f, -2.0f, 2.6f, 0.2f, 3.3f);
+            // Motor atras: alto horno con la boca hacia atras, se enciende al perforar.
+            b.parts.add(new PartDef("motor", null, Material.BLAST_FURNACE,
+                    box(-1.2f, 1.15f, -1.95f, 2.4f, 1.05f, 1.2f), false, PartDef.Kind.MOTOR, 0));
+            b.box("motor-tapa", "cuerpo", Material.YELLOW_CONCRETE, -1.15f, 2.2f, -1.9f, 2.3f, 0.08f, 1.1f);
+            b.box("escape", "detalle", Material.GRAY_CONCRETE, -0.98f, 2.2f, -1.3f, 0.18f, 0.7f, 0.18f);
+            // Cabina del operador a la izquierda.
+            b.box("cabina-base", "cuerpo", Material.YELLOW_CONCRETE, 0.12f, 1.15f, -0.7f, 1.13f, 0.35f, 1.35f);
+            b.box("cabina", "vidrio", Material.LIGHT_GRAY_STAINED_GLASS, 0.17f, 1.5f, -0.65f, 1.03f, 1.1f, 1.25f);
+            for (float z : new float[]{-0.7f, 0.57f}) {
+                for (float x : new float[]{0.12f, 1.17f}) {
+                    b.box("parante-" + x + "-" + z, "cuerpo", Material.YELLOW_CONCRETE, x, 1.5f, z, 0.08f, 1.1f, 0.08f);
+                }
+            }
+            b.box("cabina-techo", "cuerpo", Material.YELLOW_CONCRETE, 0.08f, 2.6f, -0.75f, 1.22f, 0.14f, 1.45f);
+            b.glow("luz-1", Material.SEA_LANTERN, 0.3f, 2.62f, 0.7f, 0.2f, 0.12f, 0.06f);
+            b.glow("luz-2", Material.SEA_LANTERN, 0.85f, 2.62f, 0.7f, 0.2f, 0.12f, 0.06f);
+            b.glow("baliza", Material.ORANGE_CONCRETE, 0.62f, 2.74f, -0.1f, 0.14f, 0.12f, 0.14f);
+            b.box("hidraulica", "detalle", Material.GRAY_CONCRETE, -1.2f, 1.15f, -0.65f, 1.1f, 0.7f, 1.25f);
+            // Cabezal: reductor y brida; la punta gira delante.
+            b.box("reductor", "detalle", Material.GRAY_CONCRETE, -0.9f, 0.5f, 0.65f, 1.8f, 1.7f, 0.65f);
+            b.box("brida", "detalle", Material.GRAY_CONCRETE, -1.05f, 0.3f, 1.3f, 2.1f, 2.1f, 0.12f);
+            b.glowPair("faro", Material.SEA_LANTERN, 0.75f, 0.45f, 1.42f, 0.2f, 0.18f, 0.06f);
+            for (int i = 0; i < BIT_PIECES.length; i++) {
+                b.parts.add(new PartDef("punta-" + i, "punta", Material.IRON_BLOCK, bitTransform(i, 0f), false,
+                        PartDef.Kind.BIT, i));
+            }
+            // Panel de control aparte, enganchado con una barra.
+            b.box("barra", null, Material.GRAY_CONCRETE, -0.12f, 0.35f, -2.42f, 0.24f, 0.15f, 0.47f);
+            b.box("panel-base", null, Material.BLACK_CONCRETE, -0.55f, 0f, -2.78f, 1.1f, 0.28f, 0.46f);
+            b.box("panel-pie", null, Material.GRAY_CONCRETE, -0.18f, 0.28f, -2.66f, 0.36f, 0.64f, 0.22f);
+            b.box("panel", "cuerpo", Material.YELLOW_CONCRETE, -0.48f, 0.92f, -2.72f, 0.96f, 0.68f, 0.34f);
+            b.glow("panel-pantalla", Material.LIME_STAINED_GLASS, -0.38f, 1.24f, -2.74f, 0.76f, 0.28f, 0.02f);
+            b.glow("panel-boton-1", Material.REDSTONE_BLOCK, -0.32f, 1.02f, -2.74f, 0.1f, 0.1f, 0.02f);
+            b.glow("panel-boton-2", Material.EMERALD_BLOCK, -0.16f, 1.02f, -2.74f, 0.1f, 0.1f, 0.02f);
+            b.glow("panel-boton-3", Material.GOLD_BLOCK, 0f, 1.02f, -2.74f, 0.1f, 0.1f, 0.02f);
+            b.box("panel-visera", "cuerpo", Material.YELLOW_CONCRETE, -0.53f, 1.6f, -2.78f, 1.06f, 0.06f, 0.44f);
+            b.glow("panel-luz", Material.REDSTONE_BLOCK, -0.05f, 1.66f, -2.6f, 0.1f, 0.14f, 0.1f);
         }
-        b.seat(0f, 0.6f, 0f);
-        Shape base = b.build("taladro", 0.45, 0.9, 2, 0.6, 2.35f, new Vector3f(0f, 1.35f, -0.8f), 1.8f, 1.3f);
-        return new Shape(base.id(), base.parts(), base.wheels(), base.seats(), base.halfWidth(), base.halfLength(),
-                base.height(), base.contact(), base.labelHeight(), base.exhaust(), base.interactionWidth(),
-                base.interactionHeight(), BIT_AXIS, 2.2f);
+        b.seat(0.68f, 1.5f, 0f);
+        Shape base = b.build("taladro", 1.3, 2.7, 3, 1.5, 3.4f, new Vector3f(-0.89f, 2.95f, -1.21f), 2.6f, 2.9f);
+        return new Shape(base.id(), base.signature(), base.parts(), base.wheels(), base.seats(), base.halfWidth(),
+                base.halfLength(), base.height(), base.contact(), base.labelHeight(), base.exhaust(),
+                base.interactionWidth(), base.interactionHeight(), BIT_AXIS, 2.7f, -2.0f, CONSOLE);
     }
 
     // ------------------------------------------------------------ helpers
@@ -185,6 +276,28 @@ public final class Shapes {
         Vector3f halfFace = rotation.transform(new Vector3f(side / 2f, side / 2f, 0f));
         Vector3f translation = new Vector3f(BIT_AXIS.x, BIT_AXIS.y, z).sub(halfFace);
         return new Transformation(translation, rotation, new Vector3f(side, side, depth), new Quaternionf());
+    }
+
+    /** Modelo del pack con su centro en {@code center} y escala {@code scale}; flip lo gira 180 grados. */
+    static Transformation itemTransform(Vector3f center, float scale, boolean flip) {
+        Quaternionf rot = flip ? new Quaternionf().rotateY((float) Math.PI) : new Quaternionf();
+        return new Transformation(new Vector3f(center), rot, new Vector3f(scale, scale, scale), new Quaternionf());
+    }
+
+    /** Una pieza del pack girada {@code extra} sobre su centro (rueda o punta). */
+    static Transformation rotated(Transformation base, Quaternionf extra) {
+        return new Transformation(base.getTranslation(), new Quaternionf(extra).mul(base.getLeftRotation()),
+                base.getScale(), base.getRightRotation());
+    }
+
+    /** Rueda del pack doblada {@code steerRad} (si es delantera) y girada {@code spinRad} sobre su eje. */
+    static Transformation wheelModelTransform(PartDef def, WheelDef w, float steerRad, float spinRad) {
+        return rotated(def.transform(), new Quaternionf().rotateY(w.steers() ? steerRad : 0f).rotateX(spinRad));
+    }
+
+    /** Punta del pack girada {@code spinDeg} sobre su eje. */
+    static Transformation bitModelTransform(PartDef def, float spinDeg) {
+        return rotated(def.transform(), new Quaternionf().rotateZ((float) Math.toRadians(spinDeg)));
     }
 
     /** Cubierta de la rueda (cuadrada, como en Minecraft), doblada {@code steerRad}. */
@@ -216,6 +329,28 @@ public final class Shapes {
             box(role + "-der", slot, material, -(x + sx), y, z, sx, sy, sz);
         }
 
+        void glow(String role, Material material, float x, float y, float z, float sx, float sy, float sz) {
+            parts.add(new PartDef(role, null, material, Shapes.box(x, y, z, sx, sy, sz), true, PartDef.Kind.STATIC, 0));
+        }
+
+        /** Un modelo del resource pack con su centro en {@code center}. */
+        void item(String role, String model, Vector3f center, float scale, boolean flip) {
+            parts.add(new PartDef(role, null, Material.AIR, itemTransform(center, scale, flip), false,
+                    PartDef.Kind.STATIC, 0, model));
+        }
+
+        /** Dos ruedas del resource pack en (+x, y, z) y (-x, y, z); el modelo mide 1 de diametro. */
+        void wheelModelPair(String model, float x, float y, float z, float radius, boolean steers, boolean flip) {
+            for (float sx : new float[]{x, -x}) {
+                int i = wheels.size();
+                Vector3f center = new Vector3f(sx, y, z);
+                // Ancho del modelo: 0.375 de su diametro.
+                wheels.add(new WheelDef(center, radius, radius * 0.75f, steers));
+                parts.add(new PartDef("rueda-" + i, null, Material.AIR, itemTransform(center, radius * 2f, flip),
+                        false, PartDef.Kind.WHEEL, i, model));
+            }
+        }
+
         void glowPair(String role, Material material, float x, float y, float z, float sx, float sy, float sz) {
             parts.add(new PartDef(role + "-izq", null, material, Shapes.box(x, y, z, sx, sy, sz), true, PartDef.Kind.STATIC, 0));
             parts.add(new PartDef(role + "-der", null, material, Shapes.box(-(x + sx), y, z, sx, sy, sz), true, PartDef.Kind.STATIC, 0));
@@ -238,8 +373,9 @@ public final class Shapes {
 
         Shape build(String id, double halfWidth, double halfLength, int height, double contact, float labelHeight,
                     Vector3f exhaust, float interactionWidth, float interactionHeight) {
-            return new Shape(id, List.copyOf(parts), List.copyOf(wheels), List.copyOf(seats), halfWidth, halfLength,
-                    height, contact, labelHeight, exhaust, interactionWidth, interactionHeight, null, 0f);
+            return new Shape(id, id, List.copyOf(parts), List.copyOf(wheels), List.copyOf(seats), halfWidth, halfLength,
+                    height, contact, labelHeight, exhaust, interactionWidth, interactionHeight, null, 0f,
+                    (float) -halfLength, null);
         }
     }
 }

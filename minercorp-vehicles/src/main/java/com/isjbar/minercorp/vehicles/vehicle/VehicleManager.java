@@ -4,6 +4,7 @@ import com.isjbar.minercorp.mining.company.Company;
 import com.isjbar.minercorp.vehicles.VehiclesPlugin;
 import com.isjbar.minercorp.vehicles.api.OwnerKind;
 import com.isjbar.minercorp.vehicles.fuel.FuelRegistry;
+import com.isjbar.minercorp.vehicles.integration.PackModels;
 import com.isjbar.minercorp.vehicles.garage.StoredVehicle;
 import com.isjbar.minercorp.vehicles.model.Shape;
 import com.isjbar.minercorp.vehicles.model.Shapes;
@@ -43,6 +44,7 @@ import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -78,6 +80,9 @@ public class VehicleManager {
     private static final double STEP = 1.05;
     /** Cuanto puede bajar de golpe un punto de apoyo sin caer. */
     private static final double DROP = 1.0;
+    /** Caja de click del panel de control del taladro. */
+    private static final float CONSOLE_WIDTH = 1.1f;
+    private static final float CONSOLE_HEIGHT = 1.8f;
 
     private final VehiclesPlugin plugin;
 
@@ -89,6 +94,8 @@ public class VehicleManager {
     private final NamespacedKey seatsKey;
     private final NamespacedKey clicksKey;
     private final NamespacedKey rootKey;
+    private final NamespacedKey shapeKey;
+    private final NamespacedKey consoleKey;
 
     private final Map<UUID, VehicleState> driving = new HashMap<>();
     private final Map<UUID, Inventory> openCargo = new HashMap<>();
@@ -100,6 +107,8 @@ public class VehicleManager {
     private BukkitTask tickTask;
     private BukkitTask saveTask;
     private boolean companiesDirty;
+    private boolean resourcePack;
+    private boolean flipModels;
 
     public VehicleManager(VehiclesPlugin plugin) {
         this.plugin = plugin;
@@ -111,6 +120,8 @@ public class VehicleManager {
         this.seatsKey = new NamespacedKey(plugin, "asientos");
         this.clicksKey = new NamespacedKey(plugin, "clicks");
         this.rootKey = new NamespacedKey(plugin, "raiz");
+        this.shapeKey = new NamespacedKey(plugin, "forma");
+        this.consoleKey = new NamespacedKey(plugin, "panel");
     }
 
     public void start() {
@@ -137,11 +148,23 @@ public class VehicleManager {
         this.drill = DrillSettings.load(c, plugin.getLogger());
         this.rewards = DrillRewards.load(c, plugin.getLogger());
         this.effects = Effects.load(c, plugin);
+        String usar = c.getString("resource-pack.usar", "auto").toLowerCase(Locale.ROOT);
+        this.resourcePack = switch (usar) {
+            case "true", "si", "yes" -> true;
+            case "false", "no" -> false;
+            default -> PackModels.active();
+        };
+        this.flipModels = c.getBoolean("resource-pack.girar-180", false);
         this.shapes.clear();
     }
 
+    /** True si los vehiculos se dibujan con los modelos del resource pack. */
+    public boolean usesResourcePack() {
+        return resourcePack;
+    }
+
     public Shape shapeOf(VehicleType type) {
-        return shapes.computeIfAbsent(type.modelo(), Shapes::get);
+        return shapes.computeIfAbsent(type.modelo(), id -> Shapes.get(id, resourcePack, flipModels));
     }
 
     // ---------------------------------------------------------------
@@ -166,6 +189,7 @@ public class VehicleManager {
             pdc.set(typeKey, PersistentDataType.STRING, type.id());
             pdc.set(ownerKey, PersistentDataType.STRING, ownerId.toString());
             pdc.set(fuelKey, PersistentDataType.DOUBLE, Math.min(fuel, type.tanque()));
+            pdc.set(shapeKey, PersistentDataType.STRING, shape.signature());
             if (cargo != null) pdc.set(cargoKey, PersistentDataType.BYTE_ARRAY, cargo);
         });
         String rootId = root.getUniqueId().toString();
@@ -187,12 +211,16 @@ public class VehicleManager {
         }
 
         List<String> clickIds = new ArrayList<>();
-        for (Location p : clickPositions(shape, at)) {
-            Interaction click = world.spawn(p, Interaction.class, i -> {
-                i.setInteractionWidth(shape.interactionWidth());
-                i.setInteractionHeight(shape.interactionHeight());
+        List<Location> clicks = clickPositions(shape, at);
+        for (int n = 0; n < clicks.size(); n++) {
+            // La ultima es el panel de control, si la forma tiene.
+            boolean console = shape.console() != null && n == clicks.size() - 1;
+            Interaction click = world.spawn(clicks.get(n), Interaction.class, i -> {
+                i.setInteractionWidth(console ? CONSOLE_WIDTH : shape.interactionWidth());
+                i.setInteractionHeight(console ? CONSOLE_HEIGHT : shape.interactionHeight());
                 i.setResponsive(true);
                 i.getPersistentDataContainer().set(rootKey, PersistentDataType.STRING, rootId);
+                if (console) i.getPersistentDataContainer().set(consoleKey, PersistentDataType.BYTE, (byte) 1);
             });
             clickIds.add(click.getUniqueId().toString());
         }
@@ -419,7 +447,7 @@ public class VehicleManager {
         if (id == null) return Optional.empty();
         if (type.isPresent()) return VehicleModel.find(plugin, shapeOf(type.get()), UUID.fromString(id));
         // Tipo borrado del config: igual hay que poder desarmarlo.
-        return VehicleModel.find(plugin, Shapes.get("camioneta"), UUID.fromString(id));
+        return VehicleModel.find(plugin, Shapes.get("camioneta", false, false), UUID.fromString(id));
     }
 
     private List<Entity> linked(Entity root, NamespacedKey key) {
@@ -432,6 +460,60 @@ public class VehicleManager {
             if (e != null) out.add(e);
         }
         return out;
+    }
+
+    /** True si todas las entidades del vehiculo estan cargadas (si no, desarmarlo dejaria restos). */
+    private boolean allPartsLoaded(BlockDisplay root) {
+        List<String> ids = new ArrayList<>();
+        for (NamespacedKey key : List.of(seatsKey, clicksKey, modelKey)) {
+            String list = root.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+            if (list != null) for (String id : list.split(",")) if (!id.isBlank()) ids.add(id);
+        }
+        for (String id : ids) {
+            Entity e = plugin.getServer().getEntity(UUID.fromString(id));
+            if (e == null) return false;
+            if (VehicleModel.isModelPart(plugin, e)) {
+                for (UUID part : VehicleModel.partIds(plugin, e)) {
+                    if (plugin.getServer().getEntity(part) == null) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /** True si es la caja de click del panel de control de un taladro. */
+    public boolean isConsole(Entity entity) {
+        return entity.getPersistentDataContainer().has(consoleKey, PersistentDataType.BYTE);
+    }
+
+    /**
+     * Vuelve a armar los vehiculos estacionados cuya forma cambio (otra
+     * version del plugin, o se paso de bloques a resource pack o al reves),
+     * en el mismo lugar y con el mismo combustible y carga.
+     */
+    public int refreshOutdated(Collection<? extends Entity> entities) {
+        int rebuilt = 0;
+        for (Entity e : entities) {
+            if (!isRoot(e) || !e.isValid() || driving.containsKey(e.getUniqueId())) continue;
+            BlockDisplay root = (BlockDisplay) e;
+            Optional<VehicleType> type = typeOf(root);
+            Optional<UUID> owner = ownerOf(root);
+            if (type.isEmpty() || owner.isEmpty()) continue;
+            Shape shape = shapeOf(type.get());
+            if (shape.signature().equals(root.getPersistentDataContainer().get(shapeKey, PersistentDataType.STRING))) continue;
+            if (!root.getPassengers().isEmpty() || !allPartsLoaded(root)) continue;
+            if (linked(root, seatsKey).stream().anyMatch(seat -> !seat.getPassengers().isEmpty())) continue;
+            // El centro del vehiculo es donde esta la carroceria (la raiz es el asiento del conductor).
+            Location center = modelOf(root).map(VehicleModel::location).orElse(root.getLocation());
+            if (!center.isChunkLoaded()) continue;
+            closeCargo(root.getUniqueId());
+            double fuel = fuelOf(root);
+            byte[] cargo = root.getPersistentDataContainer().get(cargoKey, PersistentDataType.BYTE_ARRAY);
+            remove(root);
+            spawn(type.get(), owner.get(), center, fuel, cargo);
+            rebuilt++;
+        }
+        return rebuilt;
     }
 
     // ---------------------------------------------------------------
@@ -455,6 +537,21 @@ public class VehicleManager {
         if (usable <= 0) return new RefuelResult(0, accepted);
         setFuel(root, current + usable * fuel.get().litrosPorItem());
         return new RefuelResult(usable, accepted);
+    }
+
+    /** Carga combustible con todo lo que sirva del inventario del jugador. Devuelve los items usados. */
+    public int refuelFromInventory(Player player, BlockDisplay root) {
+        int used = 0;
+        ItemStack[] contents = player.getInventory().getStorageContents();
+        for (ItemStack item : contents) {
+            if (item == null || item.isEmpty()) continue;
+            RefuelResult r = refuelFromItem(root, item);
+            if (r.used() <= 0) continue;
+            used += r.used();
+            if (player.getGameMode() != org.bukkit.GameMode.CREATIVE) item.setAmount(item.getAmount() - r.used());
+        }
+        player.getInventory().setStorageContents(contents);
+        return used;
     }
 
     /** Carga combustible usando carbon crudo de la empresa duena. Devuelve cuanto carbon crudo uso. */
@@ -1060,14 +1157,21 @@ public class VehicleManager {
     // Utilidades
     // ---------------------------------------------------------------
 
-    /** Posiciones de las cajas de click, repartidas a lo largo del vehiculo. */
+    /** Posiciones de las cajas de click, repartidas a lo largo del cuerpo, mas la del panel al final. */
     private static List<Location> clickPositions(Shape shape, Location center) {
         int n = shape.interactionCount();
-        List<Location> out = new ArrayList<>(n);
-        double span = shape.halfLength() * 2 - shape.interactionWidth();
+        List<Location> out = new ArrayList<>(n + 1);
+        double from = shape.clickRear() + shape.interactionWidth() / 2.0;
+        double to = shape.halfLength() - shape.interactionWidth() / 2.0;
         for (int i = 0; i < n; i++) {
-            double lz = n == 1 ? 0 : -span / 2 + span * i / (n - 1);
+            double lz = n == 1 ? (shape.clickRear() + shape.halfLength()) / 2 : from + (to - from) * i / (n - 1);
             Location l = VehicleModel.local(center, 0f, 0f, (float) lz);
+            l.setPitch(0);
+            out.add(l);
+        }
+        if (shape.console() != null) {
+            Vector3f c = shape.console();
+            Location l = VehicleModel.local(center, c.x, c.y, c.z);
             l.setPitch(0);
             out.add(l);
         }

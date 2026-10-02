@@ -1,6 +1,7 @@
 package com.isjbar.minercorp.vehicles.vehicle;
 
 import com.isjbar.minercorp.vehicles.VehiclesPlugin;
+import com.isjbar.minercorp.vehicles.gui.Menus;
 import com.isjbar.minercorp.vehicles.type.VehicleType;
 import io.papermc.paper.event.player.PrePlayerAttackEntityEvent;
 import net.kyori.adventure.text.Component;
@@ -59,6 +60,17 @@ public class VehicleListener implements Listener {
             return;
         }
         boolean owner = vehicles.canUse(player, root);
+        ItemStack hand = player.getInventory().getItemInMainHand();
+
+        // Panel de control del taladro: abre su menu (salvo que traigas combustible en la mano).
+        if (vehicles.isConsole(click) && !plugin.fuels().isAnyFuel(hand)) {
+            if (!owner) {
+                player.sendActionBar(Component.text("Este taladro es de otra empresa", NamedTextColor.RED));
+                return;
+            }
+            Menus.openPanel(plugin, player, root);
+            return;
+        }
 
         if (player.isSneaking()) {
             if (!owner) {
@@ -69,7 +81,6 @@ public class VehicleListener implements Listener {
             return;
         }
 
-        ItemStack hand = player.getInventory().getItemInMainHand();
         if (plugin.fuels().isAnyFuel(hand)) {
             if (!owner) {
                 player.sendActionBar(Component.text("Este vehiculo no es tuyo", NamedTextColor.RED));
@@ -160,6 +171,9 @@ public class VehicleListener implements Listener {
         List<Entity> entities = event.getEntities().stream()
                 .filter(e -> e instanceof BlockDisplay || e instanceof org.bukkit.entity.Boat).toList();
         if (entities.isEmpty()) return;
-        plugin.getServer().getScheduler().runTask(plugin, () -> legacy.convert(entities));
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            legacy.convert(entities);
+            vehicles.refreshOutdated(entities);
+        });
     }
 }
