@@ -14,6 +14,9 @@
 #   material: item vanilla que se ve en el inventario
 #   color: color del nombre (hex)
 #   precio: lo que paga /recursos vender por unidad
+#   modelo: (opcional) imagen propia del resource pack de McCorp, la ruta
+#           dentro de resourcepack/assets/mccorp/items sin .json. Solo se ve
+#           con MinerCorp-Pack instalado; si no, se ve "material".
 # --------------------------------------------------------------------------
 recursos:
   carbon_crudo:
@@ -50,6 +53,7 @@ recursos:
   gasolina:
     nombre: "Bidon de gasolina"
     material: ORANGE_DYE
+    modelo: resources/gasolina
     color: "#ff9a1f"
     precio: 14.0
     descripcion:

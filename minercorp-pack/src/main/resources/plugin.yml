@@ -1,0 +1,17 @@
+name: MinerCorp-Pack
+version: '${project.version}'
+main: com.isjbar.minercorp.pack.PackPlugin
+api-version: '26.3'
+author: isjbar
+description: Resource pack de McCorp (vehiculos, maquinas e items con modelo propio). Lo manda a los jugadores al entrar. Los demas plugins usan com.isjbar.minercorp.pack.api.Modelos.
+
+commands:
+  pack:
+    description: Volver a bajar el resource pack de McCorp
+    usage: /pack [info|recargar|reenviar <jugador|todos>]
+    aliases: [texturas]
+
+permissions:
+  minercorp.pack.admin:
+    description: Ver la info del pack, recargarlo y mandarselo a otros
+    default: op

@@ -16,9 +16,19 @@ jobs:
           # paper-api 26.x viene compilado para Java 25
           java-version: '25'
           cache: maven
+      - name: Revisar resource pack
+        run: python3 tools/validar-pack.py
       - name: Compilar plugins
         run: mvn -B package
+      - name: Empaquetar resource pack
+        run: python3 tools/empaquetar-pack.py
       - uses: actions/upload-artifact@v4
         with:
           name: plugins
           path: '*/target/*.jar'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resourcepack
+          path: |
+            build/mccorp-pack.zip
+            build/mccorp-pack.zip.sha1
