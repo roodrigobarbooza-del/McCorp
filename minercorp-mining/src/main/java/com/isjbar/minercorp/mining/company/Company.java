@@ -121,7 +121,10 @@ public class Company {
         return minions;
     }
 
-    /** Garaje: taladros que se guardaron golpeandolos o con /empresa taladro guardar. */
+    /**
+     * Taladros guardados antes de que existiera MinerCorp-Vehicles. Ese plugin los
+     * pasa a su garaje al arrancar y vacia esta lista; no se agregan nuevos.
+     */
     public List<StoredDrill> getStoredDrills() {
         return storedDrills;
     }

@@ -2,8 +2,6 @@ package com.isjbar.minercorp.mining.gui;
 
 import com.isjbar.minercorp.mining.MiningPlugin;
 import com.isjbar.minercorp.mining.company.Company;
-import com.isjbar.minercorp.mining.company.StoredDrill;
-import com.isjbar.minercorp.mining.vehicle.DrillTier;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -29,10 +27,6 @@ public class MinerCorpMenu {
     public static void open(MiningPlugin plugin, Player player) {
         Optional<Company> company = plugin.companies().getByMember(player.getUniqueId());
         player.openInventory(buildMain(plugin, company.orElse(null)));
-    }
-
-    public static void openTaladroSubmenu(MiningPlugin plugin, Player player, Company company) {
-        player.openInventory(buildTaladroSubmenu(plugin, company));
     }
 
     public static Inventory buildMain(MiningPlugin plugin, Company company) {
@@ -61,8 +55,8 @@ public class MinerCorpMenu {
         inv.setItem(11, item(plugin, Material.GRASS_BLOCK, "Reclamar aqui", NamedTextColor.GREEN,
                 List.of("Costo: " + costoReclamar, "Debe haber una veta de carbon en este chunk"), MenuActions.RECLAMAR));
 
-        inv.setItem(12, item(plugin, Material.IRON_PICKAXE, "Taladro-vehiculo", NamedTextColor.AQUA,
-                List.of("Comprar, y sacar los guardados"), MenuActions.TALADRO_MENU));
+        inv.setItem(12, item(plugin, Material.MINECART, "Garaje", NamedTextColor.AQUA,
+                List.of("Taladros y vehiculos de la empresa", "(abre /garaje)"), MenuActions.GARAJE));
 
         inv.setItem(14, item(plugin, Material.VILLAGER_SPAWN_EGG, "Colocar minion", NamedTextColor.LIGHT_PURPLE,
                 List.of("Extrae carbon solo con el tiempo", "Debe estar dentro de tu territorio"), MenuActions.MINION_COLOCAR));
@@ -84,55 +78,6 @@ public class MinerCorpMenu {
 
         inv.setItem(22, item(plugin, Material.BARRIER, "Cerrar", NamedTextColor.RED, List.of(), MenuActions.CERRAR));
 
-        return inv;
-    }
-
-    public static Inventory buildTaladroSubmenu(MiningPlugin plugin, Company company) {
-        MenuHolder holder = new MenuHolder(MenuHolder.Pantalla.TALADRO);
-        Inventory inv = org.bukkit.Bukkit.createInventory(holder, 36, Component.text("MinerCorp - Taladros", NamedTextColor.GOLD));
-        holder.setInventory(inv);
-
-        int maxTier = plugin.levels().tierMaximoDeTaladro(company.getLevel());
-        Material[] materiales = {Material.IRON_PICKAXE, Material.DIAMOND_PICKAXE, Material.NETHERITE_PICKAXE};
-        int[] slots = {11, 13, 15};
-
-        for (int tier = 1; tier <= materiales.length; tier++) {
-            if (!DrillTier.exists(plugin.getConfig(), tier)) continue;
-            DrillTier data = DrillTier.load(plugin.getConfig(), tier);
-            boolean disponible = tier <= maxTier;
-            List<String> lore = List.of(
-                    "Costo: " + data.costo(),
-                    "Rendimiento: +" + Math.round(data.bonusRendimiento() * 100) + "%",
-                    "Tunel: " + data.ancho() + "x" + data.alto() + " (profundidad " + data.profundidad() + ")",
-                    "Velocidad: " + Math.round(data.velocidad() * 20 * 10) / 10.0 + " bloques/s",
-                    "Potencia: x" + data.potencia() + "  Tanque: " + (int) data.combustible(),
-                    disponible ? "Click para comprar (parado en tu territorio)" : "Requiere mas nivel de empresa"
-            );
-            inv.setItem(slots[tier - 1], item(plugin, materiales[tier - 1], data.nombre(),
-                    disponible ? NamedTextColor.AQUA : NamedTextColor.DARK_GRAY, lore,
-                    MenuActions.TALADRO_TIER_PREFIX + tier));
-        }
-
-        // Ultima fila: garaje con los taladros guardados (golpeandolos o con /empresa taladro guardar).
-        List<StoredDrill> guardados = company.getStoredDrills();
-        for (int i = 0; i < guardados.size() && i < 9; i++) {
-            StoredDrill d = guardados.get(i);
-            String nombre = DrillTier.exists(plugin.getConfig(), d.tier())
-                    ? DrillTier.load(plugin.getConfig(), d.tier()).nombre() : "Taladro tier " + d.tier();
-            inv.setItem(27 + i, item(plugin, Material.MINECART, nombre + " (guardado)", NamedTextColor.GREEN,
-                    List.of("Combustible: " + (int) Math.ceil(d.combustible()),
-                            "Click para sacarlo donde estas parado", "(dentro de tu territorio)"),
-                    MenuActions.TALADRO_SACAR_PREFIX + i));
-        }
-        if (guardados.isEmpty()) {
-            inv.setItem(31, item(plugin, Material.CHEST, "Garaje vacio", NamedTextColor.GRAY,
-                    List.of("Golpea un taladro (click izquierdo)", "para guardarlo aca"), MenuActions.INFO));
-        } else if (guardados.size() > 9) {
-            inv.setItem(35, item(plugin, Material.CHEST, "Hay " + (guardados.size() - 8) + " mas", NamedTextColor.GRAY,
-                    List.of("Usa /empresa taladro sacar <numero>"), MenuActions.INFO));
-        }
-
-        inv.setItem(22, item(plugin, Material.ARROW, "Volver", NamedTextColor.GRAY, List.of(), MenuActions.VOLVER));
         return inv;
     }
 
